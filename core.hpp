@@ -127,7 +127,7 @@ namespace GwanKei {
       }
     }
     std::list<Bound> get_adjacents() const {
-      CellGroup group = get_group;
+      CellGroup group = get_group();
       int y = get_y();
       int x = get_x();
       LeftRight lr = get_lr();
