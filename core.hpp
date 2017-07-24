@@ -72,7 +72,7 @@ namespace GwanKei {
 
        Central (0,Y,X,0):
 
-       (Group=None=0, IsRight=Undefined=0)
+       (Group=None=0, LeftRight=Undefined=0)
 
        N->W [N] E->N
         [W] [0] [E]
@@ -226,8 +226,8 @@ namespace GwanKei {
 	    result.push(Bound(Cell(group, 2, 2, lr)) );
 	  }
 	  if(y == 3 || y == 5) {
-	    /* Road to 44 */
-	    result.push(Bound(Cell(group, 4, 4, lr)) );
+	    /* Road to 42 */
+	    result.push(Bound(Cell(group, 4, 2, lr)) );
 	  }
 	} else if (x == 2) {
 	  /* Horizontal */
@@ -304,7 +304,7 @@ namespace GwanKei {
 	    result.push(Bound(Cell(group, y+1, x-1, Right)) );
 	  }
 	  if(y == 1) {
-	    /* 53 to 44 */
+	    /* 53 to 42 */
 	    result.push(Bound(Cell(group, y-1, x-1, Left)) );
 	    result.push(Bound(Cell(group, y-1, x-1, Right)) );
 	  }
