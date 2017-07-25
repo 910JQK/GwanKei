@@ -1,23 +1,26 @@
 #include <exception>
+#include <string>
 #include <list>
 
 
 namespace GwanKei {
 
+  const char ORIENT[5] = {'C', 'S', 'E', 'N', 'W'};
+
+  const char LR[2] = {'L', 'R'};
+
   enum Orient {
-    None, South, East, North, West
+    Central, South, East, North, West
   };
+
+  typedef Orient CellGroup;
 
   enum LeftRight {
     Left, Right
   };
 
-  enum CellGroup {
-    Central, South, East, North, West
-  };
-
   enum CellType {
-    Ordinary, Camp, Headquarter
+    Station, Camp, Headquarter
   };
 
   enum BoundType {
@@ -31,6 +34,10 @@ namespace GwanKei {
   Orient prev_orient(Orient orient);
   Orient next_orient(Orient orient);
   Orient opposite_orient(Orient orient);
+
+  Orient prev_orient(int orient);
+  Orient next_orient(int orient);
+  Orient opposite_orient(int orient);
 
   int get_dec_digit(int num, int pos);
   bool is_valid_cell_id(int id);
@@ -58,19 +65,25 @@ namespace GwanKei {
       return "An illegeal operation was detected. Please check your program.";
     }
   };
+
+  class Cell;
+  class Bound;
   
   class Cell {
   private:
     int id;
   public:
+    Cell();
     Cell(int id);
     Cell(CellGroup group, int y, int x, LeftRight left_right = Left);
+    Cell(int group, int y, int x, int left_right = 0);
     int get_id() const;
     CellGroup get_group() const;
     int get_y() const;
     int get_x() const;
     LeftRight get_lr() const;
     CellType get_type() const;
+    std::string to_string() const;
     std::list<Bound> get_adjacents() const;
     bool operator == (const Cell& right) const;
     Cell& operator = (const Cell& right);
@@ -83,12 +96,19 @@ namespace GwanKei {
     Orient railway_orient_origin;
     Orient railway_orient_terminal;
   public:
-    Bound(Cell target);
+    Bound();
+    Bound(Cell target, bool is_sentinel = false);
     Bound(Cell target, Orient railway_orient);
+    Bound(Cell target, int railway_orient);
     Bound(
 	  Cell target,
 	  Orient railway_orient_origin,
 	  Orient railway_orient_terminal
+	  );
+    Bound(
+	  Cell target,
+	  int railway_orient_origin,
+	  int railway_orient_terminal
 	  );
     Cell get_target() const;
     BoundType get_type() const;
@@ -109,5 +129,10 @@ namespace GwanKei {
     }
   };
   
-  std::list<Cell> get_route(Cell from, Cell to, bool able_to_turn = false);
+  std::list<Cell> get_route(
+			    Cell from,
+			    Cell to,
+			    bool* occupy_state,
+			    bool able_to_turn = false
+			    );
 }
