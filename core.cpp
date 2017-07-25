@@ -647,7 +647,7 @@ namespace GwanKei {
 	       int railway_orient_origin,
 	       int railway_orient_terminal
 	       ) {
-    Bound(
+    *this = Bound(
 	  target,
 	  static_cast<Orient>(railway_orient_origin),
 	  static_cast<Orient>(railway_orient_terminal)
