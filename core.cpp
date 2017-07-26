@@ -729,21 +729,6 @@ namespace GwanKei {
     return left;
   }
 
-  AttackResult attack(int piece, int target) {
-    check_piece_id(piece);
-    check_piece_id(target);
-    if(piece == 0 || target == 0)
-      return Equal;
-    else if(piece == 32 && target == 41)
-      return Bigger;
-    else if(piece > target)
-      return Bigger;
-    else if(piece == target)
-      return Equal;
-    else /* if(piece < target) */
-      return Smaller;
-  }
-
   std::list<Cell> get_route(
 			    Cell from,
 			    Cell to,
@@ -826,4 +811,33 @@ namespace GwanKei {
 
     return std::list<Cell>(); // 不通，返回空列表
   }
+
+  Piece::Piece(int id) {
+    check_piece_id(id);
+    this->id = id;
+  }
+
+  int Piece::get_id() const {
+    return id;
+  }
+
+  AttackResult Piece::attack(const Piece& piece, const Piece& target) {
+    int p = piece.get_id();
+    int t = target.get_id();
+    if(p == 0 || t == 0)
+      return Equal;
+    else if(p == 32 && t == 41)
+      return Bigger;
+    else if(p > t)
+      return Bigger;
+    else if(p == t)
+      return Equal;
+    else /* if(p < t) */
+      return Smaller;
+  }
+
+  bool Piece::operator == (const Piece& right) const {
+    return (this->id == right.id);
+  }
+
 }

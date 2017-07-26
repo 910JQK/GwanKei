@@ -1,3 +1,7 @@
+#ifndef GWANKEI_CORE_HPP
+#define GWANKEI_CORE_HPP
+
+
 #include <exception>
 #include <string>
 #include <list>
@@ -114,6 +118,7 @@ namespace GwanKei {
     Cell& operator = (const Cell& right);
   };
 
+  /* 道路 */
   class Bound {
   private:
     Cell target;
@@ -151,9 +156,6 @@ namespace GwanKei {
     Bound& operator = (const Bound& right);
   };
 
-  /* 碰子結果判定 */
-  AttackResult attack(int piece, int target);
-
   /* 尋路用的節點 */
   struct SearchNode {
     Bound bound; // 當前道路
@@ -172,4 +174,22 @@ namespace GwanKei {
 			    /* 註： ^此處鍵爲格子的四位數 ID */
 			    bool able_to_turn = false // 工兵？
 			    );
+
+  /* 棋子 */
+  class Piece {
+  private:
+    int id; // 兩位 ID, 40, 39, 38 ... 詳見實現（實作）
+  public:
+    Piece(int id);
+    int get_id() const;
+    /* 碰子結果判定 */
+    static AttackResult attack(const Piece& piece, const Piece& target);
+    Piece& operator = (const Piece& right);
+    bool operator == (const Piece& right) const;
+    bool operator != (const Piece& right) const { return !(*this == right); };
+  };
+
 }
+
+
+#endif // GWANKEI_CORE_HPP
