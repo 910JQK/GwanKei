@@ -1,5 +1,10 @@
-#include <stack>
+#include <queue>
 #include "core.hpp"
+
+
+#ifdef DEBUG
+#include <iostream>
+#endif
 
 
 namespace GwanKei {
@@ -106,6 +111,8 @@ namespace GwanKei {
 	  return true;
 	else if(digit[1] == digit[2])
 	  return true;
+	else
+	  return false;
       } else {
 	return false;
       }
@@ -120,8 +127,12 @@ namespace GwanKei {
   }
 
   void check_cell_id(int id) {
-    if(!is_valid_cell_id(id))
+    if(!is_valid_cell_id(id)) {
+      #ifdef DEBUG
+      std::cerr << "!!! Invalid ID " << id << '\n';
+      #endif
       throw InvalidCellException();
+    }
   }
 
   bool is_valid_piece_id(int id) {
@@ -141,6 +152,7 @@ namespace GwanKei {
   }
 
   Cell::Cell(int id) {
+    check_cell_id(id);
     this->id = id;
   }
 
@@ -200,7 +212,6 @@ namespace GwanKei {
     int y = get_y();
     int x = get_x();
     LeftRight lr = get_lr();
-    result += " ";
     result += ORIENT[group];
     if(group == Central) {
       if(x != y) {
@@ -231,10 +242,10 @@ namespace GwanKei {
 	        = [0000] =
 		    ||
 	*/
-	result.push_back(Bound(Cell(0110), South));
-	result.push_back(Bound(Cell(0220), East));
-	result.push_back(Bound(Cell(0330), North));
-	result.push_back(Bound(Cell(0440), West));
+	result.push_back(Bound(Cell(110), South));
+	result.push_back(Bound(Cell(220), East));
+	result.push_back(Bound(Cell(330), North));
+	result.push_back(Bound(Cell(440), West));
       } else if (y == x) {
 	/**
 	                  [0000]
@@ -244,7 +255,7 @@ namespace GwanKei {
 	                  [y130]
 			   
 	*/
-	result.push_back(Bound(Cell(0000), opposite_orient(y)) );
+	result.push_back(Bound(Cell(0), opposite_orient(y)) );
 	result.push_back(
 		  Bound(Cell(Central, y, next_orient(y)), next_orient(y)) );
 	result.push_back(
@@ -324,7 +335,8 @@ namespace GwanKei {
 	        |\
 	       [51]
 	  */
-	  result.push_back(Bound(Cell(group, y-1, 1, lr), group));
+	  result.push_back(Bound(Cell(group, y-1, 1, lr),
+				 opposite_orient(group)) );
 	}
 	if(y == 1) {
 	  /* Upward Railway (to Central) */
@@ -333,7 +345,7 @@ namespace GwanKei {
 	           ||             ||
 	       [G  11  L] ... [G  11  R]
 	     */
-	  if(get_lr() == Left) {
+	  if(lr == Left) {
 	    result.push_back(
 			Bound(
 			      Cell(Central, prev_orient(group), group),
@@ -354,20 +366,23 @@ namespace GwanKei {
 	                \\                     //
 	             [G  11  L] ......... [G  11  R]
 	  */
-	  result.push_back(
-		      Bound(
-			    Cell(next_orient(group), 1, 1, Left),
-			    opposite_orient(group),
-			    next_orient(group)
-			    )
-		      );
-	  result.push_back(
-		      Bound(
-			    Cell(prev_orient(group), 1, 1, Right),
-			    opposite_orient(group),
-			    prev_orient(group)
-			    )
-		      );
+	  if(lr == Right) {
+	    result.push_back(
+			     Bound(
+				   Cell(next_orient(group), 1, 1, Left),
+				   opposite_orient(group),
+				   next_orient(group)
+				   )
+			     );
+	  } else {
+	    result.push_back(
+			     Bound(
+				   Cell(prev_orient(group), 1, 1, Right),
+				   opposite_orient(group),
+				   prev_orient(group)
+				   )
+			     );
+	  }
 	}
 	if(y == 5) {
 	  /* Road to 61 */
@@ -485,8 +500,7 @@ namespace GwanKei {
 	  result.push_back(Bound(Cell(group, y-1, x+1, lr)) );
 	  result.push_back(Bound(Cell(group, y-1, x-1, lr)) );
 	}
-      } else {
-	/* (x == 3) */
+      } else /* if (x == 3) */ {
 	/* Horizontal */
 	if(y == 1 || y == 5) {
 	  /* Horizontal Railway to y,2 */
@@ -571,7 +585,7 @@ namespace GwanKei {
 	  result.push_back(Bound(Cell(group, y+1, x-1, Left)) );
 	  result.push_back(Bound(Cell(group, y+1, x-1, Right)) );
 	}
-	if(y == 1) {
+	if(y == 5) {
 	  /* 53 to 42 */
 	  /**
 	       (42L)    (42R)
@@ -682,6 +696,8 @@ namespace GwanKei {
 	return true;
       else if(prev.railway_orient_terminal == next.railway_orient_origin)
 	return true;
+      else
+	return false;
     } else if(prev.type == Sentinel) {
       return true;
     } else /* if (prev.type == Ordinary) */ {
@@ -693,8 +709,10 @@ namespace GwanKei {
     Bound& left = *this;
     left.target = right.get_target();
     left.type = right.get_type();
-    left.railway_orient_origin = right.get_railway_orient_origin();
-    left.railway_orient_terminal = right.get_railway_orient_terminal();
+    if(right.type == Railway) {
+      left.railway_orient_origin = right.get_railway_orient_origin();
+      left.railway_orient_terminal = right.get_railway_orient_terminal();
+    }
     return left;
   }
 
@@ -719,37 +737,65 @@ namespace GwanKei {
 			    bool *occupy_state,
 			    bool able_to_turn /* = false */
 			    ) {
-    std::stack<SearchNode> stack;
+    std::queue<SearchNode> queue;
     bool visited[4999] = {0};
+
+    #ifdef DEBUG
+    std::cerr << "Search Route for "
+	      << from.to_string() << " -> " << to.to_string()
+	      << " with a piece "<< (able_to_turn? "able": "unable")
+	      << " to turn" << '\n';
+    #endif
 
     std::list<Cell> initial_route;
     initial_route.push_back(from);
     Bound initial_bound = Bound(from, true);
-    stack.push(SearchNode(initial_bound, initial_route));
+    queue.push(SearchNode(initial_bound, initial_route));
 
-    while(!stack.empty()) {
-      SearchNode node = stack.top();
-      stack.pop();
-      visited[node.bound.get_target().get_id()] = true;
-
-      if(node.bound.get_target() == to)
-	return node.route;
+    while(!queue.empty()) {
+      SearchNode node = queue.front();
+      queue.pop();
+      #ifdef DEBUG
+      std::cerr << "Shift " << node.bound.get_target().to_string() << '\n';
+      #endif
       
       std::list<Bound> new_bounds = node.bound.get_target().get_adjacents();
       for(auto I=new_bounds.begin(); I!=new_bounds.end(); I++) {
 	Bound& new_bound = *I;
-	if(!occupy_state[new_bound.get_target().get_id()]
+	if(!(
+	     occupy_state[new_bound.get_target().get_id()]
+	     && new_bound.get_target() != to
+	     )
+	   && new_bound.get_target() != from
 	   && !visited[new_bound.get_target().get_id()]
 	   && new_bound.is_linkable(node.bound, able_to_turn)
 	   ) {
 	  std::list<Cell> route = node.route;
 	  route.push_back(new_bound.get_target());
-	  stack.push(SearchNode(new_bound, route));
-	}
-      }
-      visited[node.bound.get_target().get_id()] = false;
+	  if(new_bound.get_target() == to) {
+	    #ifdef DEBUG
+	    bool first = true;	    
+	    for(auto I=route.begin(); I!=route.end(); I++) {
+	      if(!first)
+		std::cerr << " -> ";
+	      std::cerr << I->to_string();
+	      first = false;
+	    }
+	    std::cerr << '\n';
+	    #endif
+	    return route;
+	  }
+	  queue.push(SearchNode(new_bound, route, node.counter+1));
+	  visited[new_bound.get_target().get_id()] = true;
+	  #ifdef DEBUG
+	  std::cerr << "Push " << new_bound.get_target().to_string() << '\n';
+	  #endif
+	} // if
+      } // for
     } // while not empty
-
+    #ifdef DEBUG
+    std::cerr << "No route found" << '\n';
+    #endif
     return std::list<Cell>();
   }
 }

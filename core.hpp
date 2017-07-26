@@ -86,6 +86,7 @@ namespace GwanKei {
     std::string to_string() const;
     std::list<Bound> get_adjacents() const;
     bool operator == (const Cell& right) const;
+    bool operator != (const Cell& right) const { return !(*this == right); };
     Cell& operator = (const Cell& right);
   };
 
@@ -117,15 +118,17 @@ namespace GwanKei {
     bool is_linkable(const Bound& prev, bool able_to_turn = false) const;
     Bound& operator = (const Bound& right);
   };
-  
+
   AttackResult attack(int piece, int target);
 
   struct SearchNode {
     Bound bound;
     std::list<Cell> route;
-    SearchNode(Bound bound, std::list<Cell> route) {
+    int counter;
+    SearchNode(Bound bound, std::list<Cell> route, int counter = 0) {
       this->bound = bound;
       this->route = route;
+      this->counter = counter;
     }
   };
   
