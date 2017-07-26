@@ -5,32 +5,55 @@
 
 namespace GwanKei {
 
-  const char ORIENT[5] = {'C', 'S', 'E', 'N', 'W'};
-
-  const char LR[2] = {'L', 'R'};
-
+  /* 方向，同時也是格子的分組 */
   enum Orient {
     Central, South, East, North, West
+    /* 九宮格，南，東，北，西 */
   };
 
   typedef Orient CellGroup;
 
+  const char ORIENT[5] = {'C', 'S', 'E', 'N', 'W'};
+
+  /* 左右 */
   enum LeftRight {
     Left, Right
+    /**
+       註：
+           座標有左右之分，
+	   比如左側的 61 和右側的 61 不同，
+	   正好處在相互對稱的位置上。
+	   對於位於中軸線上的座標（如 53），
+	   一律按左計。
+     */
   };
 
+  const char LR[2] = {'L', 'R'};
+
+  /* 格子類型 */
   enum CellType {
     Station, Camp, Headquarter
+    /* 兵站，行營，大本營 */
   };
 
+  /* 道路類型 */
   enum BoundType {
     Sentinel, Ordinary, Railway
+    /* 哨位，公路，鐵路 */
+    /**
+       註：
+           類型爲「哨位」的道路是尋路時所用的起點，
+	   用在隊列（佇列）中的第一個節點上，可與任意其他道路連接
+     */
   };
 
+  /* 碰子結果 */
   enum AttackResult {
     Bigger, Smaller, Equal
+    /* 吃，碰死，打對 */
   };
 
+  /* 南東北西，逆時針轉 */
   Orient prev_orient(Orient orient);
   Orient next_orient(Orient orient);
   Orient opposite_orient(Orient orient);
@@ -68,10 +91,11 @@ namespace GwanKei {
 
   class Cell;
   class Bound;
-  
+
+  /* 格子 */
   class Cell {
   private:
-    int id;
+    int id; // 四位十進制數格子 ID, 詳見實現（實作）
   public:
     Cell();
     Cell(int id);
@@ -84,7 +108,7 @@ namespace GwanKei {
     LeftRight get_lr() const;
     CellType get_type() const;
     std::string to_string() const;
-    std::list<Bound> get_adjacents() const;
+    std::list<Bound> get_adjacents() const; // 取得鄰接的格子
     bool operator == (const Cell& right) const;
     bool operator != (const Cell& right) const { return !(*this == right); };
     Cell& operator = (const Cell& right);
@@ -94,8 +118,8 @@ namespace GwanKei {
   private:
     Cell target;
     BoundType type;
-    Orient railway_orient_origin;
-    Orient railway_orient_terminal;
+    Orient railway_orient_origin = Central; // 起點鐵路方向
+    Orient railway_orient_terminal = Central; // 終點鐵路方向
   public:
     Bound();
     Bound(Cell target, bool is_sentinel = false);
@@ -116,26 +140,36 @@ namespace GwanKei {
     Orient get_railway_orient_origin() const;
     Orient get_railway_orient_terminal() const;
     bool is_linkable(const Bound& prev, bool able_to_turn = false) const;
+    /**
+       is_linkable() 用於判斷該道路可否與上一條道路相連
+       若棋子是工兵（可以轉向，able_to_turn == true），
+       則只要求兩條路都是鐵路；
+       若棋子不是工兵，不可以轉向，
+       就必須要求兩段鐵路平滑連接，
+       即 prev.railway_orient_terminal == this->railway_orient_origin
+     */
     Bound& operator = (const Bound& right);
   };
 
+  /* 碰子結果判定 */
   AttackResult attack(int piece, int target);
 
+  /* 尋路用的節點 */
   struct SearchNode {
-    Bound bound;
-    std::list<Cell> route;
-    int counter;
-    SearchNode(Bound bound, std::list<Cell> route, int counter = 0) {
+    Bound bound; // 當前道路
+    std::list<Cell> route; // 記錄下走過的所有格子
+    SearchNode(Bound bound, std::list<Cell> route) {
       this->bound = bound;
       this->route = route;
-      this->counter = counter;
     }
   };
-  
+
+  /* 尋路 */
   std::list<Cell> get_route(
-			    Cell from,
-			    Cell to,
-			    bool* occupy_state,
-			    bool able_to_turn = false
+			    Cell from, // 起點
+			    Cell to, // 終點
+			    bool* occupy_state, // 各個格子的佔用狀態
+			    /* 註： ^此處鍵爲格子的四位數 ID */
+			    bool able_to_turn = false // 工兵？
 			    );
 }

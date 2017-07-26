@@ -10,11 +10,12 @@
 namespace GwanKei {
 
   /**
-       Position Indicator (Cell Identity)
+       【四位格子 ID】
 
-       Ordinary (G,Y,X,R):
+       一般位置 / Ordinary (G,Y,X,LR):
 
-       (G=Group, S=1, E=2, N=3, W=4)
+       (G=Group, 0=Central, 1=South, 2=East, 3=North, 4=West)
+       (Left=0, Right=1)
 
        |-----|--------------------------------------------|
        | y\x |    1        2        3        2        1   |      
@@ -33,7 +34,7 @@ namespace GwanKei {
        |     |         L  E  F  T       |    R I G H T    |
        |-----|--------------------------------------------|
 
-       Central (0,Y,X,0):
+       九宮格 / Central (0,Y,X,0):
 
        (Group=None=0, LeftRight=Undefined=0)
 
@@ -54,7 +55,7 @@ namespace GwanKei {
   */
 
   /**
-     Piece Indicator
+     【棋子編號】
      
      41 | 地雷
      40 | 司令
@@ -157,8 +158,10 @@ namespace GwanKei {
   }
 
   Cell::Cell(CellGroup group, int y, int x, LeftRight left_right /* =Left */) {
+    // 根據編號規則，中路以左計
     if(group != Central && x == 3 && left_right == Right)
       left_right = Left;
+    // 根據編號規則，九宮格以左計
     else if(group == Central)
       left_right = Left;
     this->id = group*1000+y*100+x*10+left_right;
@@ -207,6 +210,16 @@ namespace GwanKei {
   }
 
   std::string Cell::to_string() const {
+    /**
+       【返回格式】
+       九宮格：
+       CNW CN CEN
+       CW  CC  CE
+       CWS CS CSE
+       一般：
+       GYX{L,R,} (G = Group in {S,E,N,W})
+       e.g. S51L E52R N53
+     */
     std::string result = "";
     CellGroup group = get_group();
     int y = get_y();
@@ -737,42 +750,52 @@ namespace GwanKei {
 			    bool *occupy_state,
 			    bool able_to_turn /* = false */
 			    ) {
+    /* 使用 Breadth-First Search 尋路 */
+
     std::queue<SearchNode> queue;
-    bool visited[4999] = {0};
+    bool visited[4999] = {0}; // 格子是否走過[格子ID] = {沒走過};
 
     #ifdef DEBUG
-    std::cerr << "Search Route for "
+    std::cerr << "Search a topological-shortest route for "
 	      << from.to_string() << " -> " << to.to_string()
 	      << " with a piece "<< (able_to_turn? "able": "unable")
 	      << " to turn" << '\n';
     #endif
 
+    /* 哨位節點入列 */
     std::list<Cell> initial_route;
     initial_route.push_back(from);
     Bound initial_bound = Bound(from, true);
     queue.push(SearchNode(initial_bound, initial_route));
 
     while(!queue.empty()) {
+      /* 前方出列 */
       SearchNode node = queue.front();
       queue.pop();
+
       #ifdef DEBUG
       std::cerr << "Shift " << node.bound.get_target().to_string() << '\n';
       #endif
-      
+
+      /* 取得與當前格子鄰接的格子，嘗試繼續走 */
       std::list<Bound> new_bounds = node.bound.get_target().get_adjacents();
       for(auto I=new_bounds.begin(); I!=new_bounds.end(); I++) {
 	Bound& new_bound = *I;
 	if(!(
-	     occupy_state[new_bound.get_target().get_id()]
-	     && new_bound.get_target() != to
+	     occupy_state[new_bound.get_target().get_id()] // 有棋子佔位，不通
+	     && new_bound.get_target() != to // 目的地有棋子則不算佔位
 	     )
-	   && new_bound.get_target() != from
-	   && !visited[new_bound.get_target().get_id()]
-	   && new_bound.is_linkable(node.bound, able_to_turn)
+	   && new_bound.get_target() != from // 不能繞回來
+	   && !visited[new_bound.get_target().get_id()] // 走過的格子不走
+	   && new_bound.is_linkable(node.bound, able_to_turn) // 道路可連接
 	   ) {
+	  /* 記錄路線 */
 	  std::list<Cell> route = node.route;
 	  route.push_back(new_bound.get_target());
+
+	  /* 已走到目的地？ */
 	  if(new_bound.get_target() == to) {
+
 	    #ifdef DEBUG
 	    bool first = true;	    
 	    for(auto I=route.begin(); I!=route.end(); I++) {
@@ -783,19 +806,24 @@ namespace GwanKei {
 	    }
 	    std::cerr << '\n';
 	    #endif
-	    return route;
+
+	    return route; // 返回算出的路線
 	  }
-	  queue.push(SearchNode(new_bound, route, node.counter+1));
-	  visited[new_bound.get_target().get_id()] = true;
+
+	  queue.push(SearchNode(new_bound, route)); // 新節點入列
+	  visited[new_bound.get_target().get_id()] = true; // 入列則算走過
+
 	  #ifdef DEBUG
 	  std::cerr << "Push " << new_bound.get_target().to_string() << '\n';
 	  #endif
 	} // if
       } // for
     } // while not empty
+
     #ifdef DEBUG
     std::cerr << "No route found" << '\n';
     #endif
-    return std::list<Cell>();
+
+    return std::list<Cell>(); // 不通，返回空列表
   }
 }
