@@ -61,32 +61,51 @@ namespace GwanKei {
      40 | 司令
      .. | ・・
      32 | 工兵
+     31 | 軍旗
      00 | 炸彈
 
    */
 
   Orient prev_orient(Orient orient) {
-    return static_cast<Orient>( ((orient-1)+(-1+4))%4+1 );
+    if(orient == Central)
+      return Central;
+    else
+      return static_cast<Orient>( ((orient-1)+(-1+4))%4+1 );
   }
 
   Orient next_orient(Orient orient) {
-    return static_cast<Orient>( ((orient-1)+1)%4+1 );
+    if(orient == Central)
+      return Central;
+    else
+      return static_cast<Orient>( ((orient-1)+1)%4+1 );
   }
 
   Orient opposite_orient(Orient orient) {
-    return static_cast<Orient>( ((orient-1)+2)%4+1 );
+    if(orient == Central)
+      return Central;
+    else
+      return static_cast<Orient>( ((orient-1)+2)%4+1 );
   }
 
   Orient prev_orient(int orient) {
-    return static_cast<Orient>( ((orient-1)+(-1+4))%4+1 );
+    if(orient == 0)
+      return Central;
+    else
+      return static_cast<Orient>( ((orient-1)+(-1+4))%4+1 );    
   }
 
   Orient next_orient(int orient) {
-    return static_cast<Orient>( ((orient-1)+1)%4+1 );
+    if(orient == 0)
+      return Central;
+    else
+      return static_cast<Orient>( ((orient-1)+1)%4+1 );
   }
 
   Orient opposite_orient(int orient) {
-    return static_cast<Orient>( ((orient-1)+2)%4+1 );
+    if(orient == 0)
+      return Central;
+    else
+      return static_cast<Orient>( ((orient-1)+2)%4+1 );
   }
 
   int get_dec_digit(int num, int pos) {
@@ -94,6 +113,10 @@ namespace GwanKei {
       num /= 10;
     }
     return num % 10;
+  }
+
+  bool is_valid_orient(int orient) {
+    return (0 <= orient && orient <= 4);
   }
 
   bool is_valid_cell_id(int id) {
@@ -127,15 +150,6 @@ namespace GwanKei {
     }
   }
 
-  void check_cell_id(int id) {
-    if(!is_valid_cell_id(id)) {
-      #ifdef DEBUG
-      std::cerr << "!!! Invalid ID " << id << '\n';
-      #endif
-      throw InvalidCellException();
-    }
-  }
-
   bool is_valid_piece_id(int id) {
     if((id >= 32 && id <= 41) || id == 0)
       return true;
@@ -143,17 +157,12 @@ namespace GwanKei {
       return false;    
   }
 
-  void check_piece_id(int id) {
-    if(!is_valid_piece_id(id))
-      throw InvalidPieceException();
-  }
-
   Cell::Cell() {
     *this = Cell(0);
   }
 
   Cell::Cell(int id) {
-    check_cell_id(id);
+    assert(is_valid_cell_id(id));
     this->id = id;
   }
 
@@ -165,7 +174,7 @@ namespace GwanKei {
     else if(group == Central)
       left_right = Left;
     this->id = group*1000+y*100+x*10+left_right;
-    check_cell_id(this->id);
+    assert(is_valid_cell_id(this->id));
   }
 
   Cell::Cell(int group, int y, int x, int left_right /* = 0 */ ) {
@@ -690,14 +699,12 @@ namespace GwanKei {
   }
 
   Orient Bound::get_railway_orient_origin() const {
-    if(this->type != Railway)
-      throw InvalidOperationException();
+    assert(this->type == Railway);
     return this->railway_orient_origin;
   }
 
   Orient Bound::get_railway_orient_terminal() const {
-    if(this->type != Railway)
-      throw InvalidOperationException();
+    assert(this->type == Railway);
     return this->railway_orient_terminal;
   }
 
@@ -738,7 +745,7 @@ namespace GwanKei {
     /* 使用 Breadth-First Search 尋路 */
 
     std::queue<SearchNode> queue;
-    bool visited[4999] = {0}; // 格子是否走過[格子ID] = {沒走過};
+    bool visited[4631] = {0}; // 格子是否走過[格子ID] = {沒走過};
 
     #ifdef DEBUG
     std::cerr << "Search a topological-shortest route for "
@@ -812,8 +819,12 @@ namespace GwanKei {
     return std::list<Cell>(); // 不通，返回空列表
   }
 
+  Piece::Piece() {
+    *this = Piece(0);
+  }
+
   Piece::Piece(int id) {
-    check_piece_id(id);
+    assert(is_valid_piece_id(id));
     this->id = id;
   }
 
@@ -834,6 +845,11 @@ namespace GwanKei {
       return Equal;
     else /* if(p < t) */
       return Smaller;
+  }
+
+  Piece& Piece::operator = (const Piece& right) {
+    this->id = right.id;
+    return *this;
   }
 
   bool Piece::operator == (const Piece& right) const {

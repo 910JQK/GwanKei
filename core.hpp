@@ -2,9 +2,9 @@
 #define GWANKEI_CORE_HPP
 
 
-#include <exception>
 #include <string>
 #include <list>
+#include <cassert>
 
 
 namespace GwanKei {
@@ -51,11 +51,13 @@ namespace GwanKei {
      */
   };
 
-  /* 碰子結果 */
-  enum AttackResult {
-    Bigger, Smaller, Equal
-    /* 吃，碰死，打對 */
+  /* 碰子 / 移動 結果 */
+  enum MoveResult {
+    Null, Bigger, Smaller, Equal
+    /* 無，吃，碰死，打對 */
   };
+
+  typedef MoveResult AttackResult;
 
   /* 南東北西，逆時針轉 */
   Orient prev_orient(Orient orient);
@@ -67,31 +69,10 @@ namespace GwanKei {
   Orient opposite_orient(int orient);
 
   int get_dec_digit(int num, int pos);
-  bool is_valid_cell_id(int id);
-  void check_cell_id(int id);
-  bool is_valid_piece_id(int id);
-  void check_piece_id(int id);
 
-  class InvalidCellException : public std::exception {
-    virtual const char* what() const throw()
-    {
-      return "An illegeal Cell was specified. Please check your program.";
-    }
-  };
-  
-  class InvalidPieceException : public std::exception {
-    virtual const char* what() const throw()
-    {
-      return "An illegeal Piece was specified. Please check your program.";
-    }
-  };
-  
-  class InvalidOperationException : public std::exception {
-    virtual const char* what() const throw()
-    {
-      return "An illegeal operation was detected. Please check your program.";
-    }
-  };
+  bool is_valid_orient(int orient);
+  bool is_valid_cell_id(int id);
+  bool is_valid_piece_id(int id);
 
   class Cell;
   class Bound;
@@ -180,6 +161,7 @@ namespace GwanKei {
   private:
     int id; // 兩位 ID, 40, 39, 38 ... 詳見實現（實作）
   public:
+    Piece();
     Piece(int id);
     int get_id() const;
     /* 碰子結果判定 */
@@ -188,6 +170,10 @@ namespace GwanKei {
     bool operator == (const Piece& right) const;
     bool operator != (const Piece& right) const { return !(*this == right); };
   };
+
+  bool is_valid_orient(int orient);
+  bool is_valid_cell_id(int id);
+  bool is_valid_piece_id(int id);
 
 }
 
