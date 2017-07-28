@@ -151,7 +151,7 @@ namespace GwanKei {
   }
 
   bool is_valid_piece_id(int id) {
-    if((id >= 32 && id <= 41) || id == 0)
+    if((id >= 31 && id <= 41) || id == 0)
       return true;
     else
       return false;    
