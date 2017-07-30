@@ -120,4 +120,172 @@ namespace GwanKei {
     this->masked = right.masked;
     return *this;
   }
+
+  Element::Element() {
+    // empty
+    // this->id = 0;
+  }
+
+  Element::Element(int id) {
+    this->id = id;
+  }
+
+  Element::Element(Player player) {
+    // unknown
+    this->id = 1+player*26+1;
+  }
+
+  Element::Element(Player player, int layout_index) {
+    assert(is_valid_layout_index(layout_index));
+    this->id = 1+player*26+(layout_index+1)+1;
+  }
+
+  int Element::get_id() const {
+    return id;
+  }
+
+  bool Element::is_empty() const {
+    return (id == 0);
+  }
+
+  Player Element::get_player() const {
+    assert(!is_empty());
+    return static_cast<Player>((id-1) / 26);
+  }
+
+  bool Element::is_unknown() const {
+    return (id != 0) && ((id-1)%26 == 0);
+  }
+
+  int Element::get_layout_index() const {
+    assert(!is_empty());
+    assert(!is_unknown());
+    return ((id-1)%26 - 1);
+  }
+
+  Element& Element::operator = (const Element& right) {
+    this->id = right.id;
+    return *this;
+  }
+
+  Feedback::Feedback() {
+    // null
+    // this->move_result = Null
+  }
+
+  Feedback::Feedback(MoveResult move_result, const std::list<Cell>& route) {
+    this->move_result = move_result;
+    this->route = route;
+  }
+
+  bool is_nothing() const {
+    return (move_result == Nothing);
+  }
+
+  Feedback& Feedback::operator = (const Feedback& right) {
+    this->move_result = right.move_result;
+    this->route = right.route;
+  }
+
+  void Game::init_board() {
+    for(int i=0; i<4; i++) {
+      for(int j=0; j<4631; j++) {
+	if(is_valid_cell_id(j)) {
+	  if(enabled[i]) {
+	    int layout_index = convert_cell_to_layout_index(Cell(j));
+	    if(layout_index != -1)
+	      board[j] = Element(static_cast<Player>(i), layout_index);
+	    else
+	      board[j] = Element();
+	  } else {
+	    board[j] = Element();
+	  }
+	} // if j is a valid cell id
+      } // for j in 0..4630
+    } // for i in 0..3
+  }
+
+  Game::Game(const Layout& layout_S, const Layout& layout_N, bool EW /*=1*/) {
+    if(!EW) {
+      layout[convert_orient_to_player(South)] = layout_S;
+      layout[convert_orient_to_player(North)] = layout_N;
+      enabled[convert_orient_to_player(South)] = true;
+      enabled[convert_orient_to_player(North)] = true;
+    } else {
+      layout[convert_orient_to_player(East)] = layout_S;
+      layout[convert_orient_to_player(West)] = layout_N;
+      enabled[convert_orient_to_player(East)] = true;
+      enabled[convert_orient_to_player(West)] = true;
+    }
+    init_board();
+  }
+
+  Game::Game(const Layout* layouts) {
+    for(int i=0; i<4; i++) {
+      this->layout[i] = layouts[i];
+      this->enabled[i] = true;
+    }
+    init_board();
+  }
+
+  Piece Game::get_piece(const Element& element) const {
+    assert(!element.is_empty() && !element.is_unknown());
+    return layout[element.get_player()].get(element.get_layout_id());
+  }
+
+  bool Game::is_movable(Cell from, Cell to) const {
+    Element from_element = board[from.get_id()];
+    Element to_element = board[from.get_id()];
+    assert(!from_element.is_empty() && !from_element.is_unknown());
+    if(from.get_type() == Headquarter) {
+      return false;
+    } else {
+      bool occupy_state[4631] = {0};
+      for(int i=0; i<4631; i++) {
+	if(is_valid_cell_id(i)) {
+	  occupy_state[i] = !board[i].is_empty();
+	} // if i is a valid cell id
+      } // for i in 0..4630
+      std::list<Cell> route = get_route(
+          from, to, occupy_state, get_piece(from_element) == Piece(32)
+      );
+      if(route.empty())
+	return false;
+      else
+	return true;
+    }
+  }
+
+  Feedback Game::move(Cell from, Cell to, MoveResult force_result /*=Null*/) {
+    Element from_element = board[from.get_id()];
+    Element to_element = board[from.get_id()];
+    assert(!from_element.is_empty());
+    assert(from.get_type != Headquarter);
+    bool occupy_state[4631] = {0};
+    for(int i=0; i<4631; i++) {
+      if(is_valid_cell_id(i)) {
+	occupy_state[i] = !board[i].is_empty();
+      }
+    }
+    MoveResult result;
+    std::list<Cell> route;
+    if(!from_element.is_unknown() && !to_element.is_unknown()) {
+      assert(force_result == Null);
+      if(!to_element.is_empty()) {
+	result = Piece::attack(get_piece(from_element), get_piece(to_element));
+      } else {
+	result = Null;
+      }
+      route = get_route(
+	  from, to, occupy_state, get_piece(from_element) == Piece(32)
+      );
+      assert(!route.empty());
+    } else {
+      assert(force_result != Null);
+      result = force_result;
+      route = get_route(from, to, occupy_state, true);
+      assert(!route.empty());
+    }
+    return Feedback(result, route);
+  }
 }

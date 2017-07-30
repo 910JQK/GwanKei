@@ -72,7 +72,7 @@ namespace GwanKei {
     bool masked = false;
   public:
     Layout(bool masked = false);
-    Layout(Piece* data);
+    Layout(const Piece* data);
     bool is_masked() const;
     Piece get(int index) const;
     Piece get(int y, int x, LeftRight lr) const;
@@ -84,54 +84,48 @@ namespace GwanKei {
   enum Player {
     Orange, Purple, Green, Blue
   };
-  /*
-  class GamePiece {
+
+  class Element {
   private:
     int id = 0; // empty
   public:
-    GamePiece();
-    GamePiece(int id);
-    GamePiece(Player player, Piece piece, int subscript);
-    Player get_player();
-    Piece get_piece();
-    int get_subscript();
+    Element();
+    Element(int id);
+    Element(Player player);
+    Element(Player player, int layout_index);
+    int get_id() const;
     bool is_empty() const;
-    GamePiece& operator = (const GamePiece& right);
+    Player get_player() const;
+    bool is_unknown() const;
+    int get_layout_index() const;
+    Element& operator = (const Element& right);
   };
 
-  class MoveResultWithRoute {
+  class Feedback {
   private:
-    MoveResult move_result = Null;
+    MoveResult move_result = Nothing;
     std::list<Cell> route;
   public:
-    MoveResultWithRoute();
-    MoveResultWithRoute(MoveResult move_result, const std::list<Cell>& route);
+    Feedback();
+    Feedback(MoveResult move_result, const std::list<Cell>& route);
     bool is_nothing() const;
-    MoveResultWithRoute& operator = (const MoveResultWithRoute& right);
+    Feedback& operator = (const Feedback& right);
   };
 
   class Game {
   private:
-    GamePiece board[4631];
-    Layout layouts[4];
-    Player turn = Orange;
+    Element board[4631];
+    Layout layout[4];
+    bool enabled[4] = {0};
+    void init_board();
   public:
-    Game(const Layout& layout_S, const Layout& layout_N);
-    Game(const Layout& layout_E, const Layout& layout_W);
-    Game(const Layout& layout_S, const Layout& layout_E,
-	 const Layout& layout_N,const Layout& layout_W);
-    Player whose_turn() const;
-    bool is_movable(Player player, Cell from, Cell to) const;
-    MoveResultWithRoute move(
-			     Player player,
-			     Cell from,
-			     Cell to,
-			     MoveResultWithRoute force_result
-			         = MoveResultWithRoute()
-			     );
-    void skip();
+    Game(const Layout& layout_S, const Layout& layout_N, bool EW = false);
+    Game(const Layout* layouts);
+    Piece get_piece(const Element& element) const;
+    bool is_movable(Cell from, Cell to) const;
+    Feedback move(Cell from, Cell to, MoveResult force_result = Null);
   };
-  */
+
   bool is_valid_game_piece_id(int id);
   bool is_valid_layout(Piece* data);
   bool is_valid_layout_index(int index);

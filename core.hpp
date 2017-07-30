@@ -53,7 +53,7 @@ namespace GwanKei {
 
   /* 碰子 / 移動 結果 */
   enum MoveResult {
-    Null, Bigger, Smaller, Equal
+    Nothing, Bigger, Smaller, Equal
     /* 無，吃，碰死，打對 */
   };
 
