@@ -228,7 +228,11 @@ namespace GwanKei {
     init_board();
   }
 
-  Piece Game::get_piece(const Element& element) const {
+  Element Game::element_of(Cell cell) const {
+    return board[cell.get_id()];
+  }
+
+  Piece Game::piece_of(Element element) const {
     assert(!element.is_empty() && !element.is_unknown());
     return layout[element.get_player()].get(element.get_layout_id());
   }
@@ -247,7 +251,7 @@ namespace GwanKei {
 	} // if i is a valid cell id
       } // for i in 0..4630
       std::list<Cell> route = get_route(
-          from, to, occupy_state, get_piece(from_element) == Piece(32)
+          from, to, occupy_state, piece_of(from_element) == Piece(32)
       );
       if(route.empty())
 	return false;
@@ -272,12 +276,12 @@ namespace GwanKei {
     if(!from_element.is_unknown() && !to_element.is_unknown()) {
       assert(force_result == Null);
       if(!to_element.is_empty()) {
-	result = Piece::attack(get_piece(from_element), get_piece(to_element));
+	result = Piece::attack(piece_of(from_element), piece_of(to_element));
       } else {
 	result = Null;
       }
       route = get_route(
-	  from, to, occupy_state, get_piece(from_element) == Piece(32)
+	  from, to, occupy_state, piece_of(from_element) == Piece(32)
       );
       assert(!route.empty());
       board[to.get_id()] = from_element;

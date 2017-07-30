@@ -121,7 +121,8 @@ namespace GwanKei {
   public:
     Game(const Layout& layout_S, const Layout& layout_N, bool EW = false);
     Game(const Layout* layouts);
-    Piece get_piece(const Element& element) const;
+    Element element_of(Cell cell) const;
+    Piece piece_of(Element element) const;
     bool is_movable(Cell from, Cell to) const;
     Feedback move(Cell from, Cell to, MoveResult force_result = Null);
   };
