@@ -14,13 +14,24 @@ namespace GwanKei {
 
   bool is_valid_layout(Piece *data) {
     int count[42] = {0};
+    bool ok = true;
     for(int i=0; i<25; i++) {
+      Cell cell = convert_layout_index_to_cell(i);
+      if( (cell.get_y() == 1 && data[i].get_id() == 0)	 
+	 || (cell.get_y() < 5 && data[i].get_id() == 41) ) {
+	return false;
+      }
+      // 計數
       count[data[i].get_id()]++;
     }
+    
     for(int i=0; i<12; i++) {
       if(count[PIECES[i]] != NUMBER_OF_PIECES[PIECES[i]])
 	return false;
     }
+    if(data[convert_cell_to_layout_index(Cell(1,6,2,0))] != Piece(31)
+       && data[convert_cell_to_layout_index(Cell(1,6,2,1))] != Piece(31))
+      return false;
     return true;
   }
 
@@ -73,8 +84,19 @@ namespace GwanKei {
     return data[convert_cell_to_layout_index(Cell(South,y,x,lr))];
   }
 
+  bool Layout::is_able_to_swap(int index1, int index2) const {
+    assert(!is_masked());
+    Piece copy[25];
+    for(int i=0; i<25; i++)
+      copy[i] = data[i];
+    copy[index1] = data[index2];
+    copy[index2] = data[index1];
+    return is_valid_layout(copy);
+  }
+
   void Layout::swap(int index1, int index2) {
     assert(!is_masked());
+    assert(is_able_to_swap());
     Piece t = data[index1];
     data[index1] = data[index2];
     data[index2] = t;
@@ -242,6 +264,8 @@ namespace GwanKei {
     Element to_element = board[from.get_id()];
     assert(!from_element.is_empty() && !from_element.is_unknown());
     if(from.get_type() == Headquarter) {
+      return false;
+    } else if(piece_of(from_element) == Piece(41)) {
       return false;
     } else {
       bool occupy_state[4631] = {0};

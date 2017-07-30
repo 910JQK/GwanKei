@@ -76,6 +76,7 @@ namespace GwanKei {
     bool is_masked() const;
     Piece get(int index) const;
     Piece get(int y, int x, LeftRight lr) const;
+    bool is_able_to_swap(int index1, int index2) const;
     void swap(int index1, int index2);
     std::string to_string() const;
     Layout& operator = (const Layout& right);
