@@ -280,11 +280,15 @@ namespace GwanKei {
 	  from, to, occupy_state, get_piece(from_element) == Piece(32)
       );
       assert(!route.empty());
+      board[to.get_id()] = from_element;
+      board[from.get_id()] = Element();
     } else {
       assert(force_result != Null);
       result = force_result;
       route = get_route(from, to, occupy_state, true);
       assert(!route.empty());
+      board[to.get_id()] = from_element;
+      board[from.get_id()] = Element();
     }
     return Feedback(result, route);
   }
