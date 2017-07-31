@@ -1,0 +1,10 @@
+// Makefile
+Makefile
+
+// temp files
+.qmake*
+*.o
+moc_*
+
+// target
+GwanKei
