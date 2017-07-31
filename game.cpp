@@ -12,9 +12,8 @@ namespace GwanKei {
     return (0 <= index && index < 25);
   }
 
-  bool is_valid_layout(Piece *data) {
+  bool is_valid_layout(const Piece *data) {
     int count[42] = {0};
-    bool ok = true;
     for(int i=0; i<25; i++) {
       Cell cell = convert_layout_index_to_cell(i);
       if( (cell.get_y() == 1 && data[i].get_id() == 0)	 
@@ -64,7 +63,7 @@ namespace GwanKei {
     this->masked = masked;
   }
 
-  Layout::Layout(Piece *data) {
+  Layout::Layout(const Piece *data) {
     assert(is_valid_layout(data));
     for(int i=0; i<25; i++)
       this->data[i] = data[i];
@@ -96,7 +95,7 @@ namespace GwanKei {
 
   void Layout::swap(int index1, int index2) {
     assert(!is_masked());
-    assert(is_able_to_swap());
+    assert(is_able_to_swap(index1, index2));
     Piece t = data[index1];
     data[index1] = data[index2];
     data[index2] = t;
@@ -200,13 +199,14 @@ namespace GwanKei {
     this->route = route;
   }
 
-  bool is_nothing() const {
+  bool Feedback::is_nothing() const {
     return (move_result == Nothing);
   }
 
   Feedback& Feedback::operator = (const Feedback& right) {
     this->move_result = right.move_result;
     this->route = right.route;
+    return *this;
   }
 
   void Game::init_board() {
@@ -256,7 +256,7 @@ namespace GwanKei {
 
   Piece Game::piece_of(Element element) const {
     assert(!element.is_empty() && !element.is_unknown());
-    return layout[element.get_player()].get(element.get_layout_id());
+    return layout[element.get_player()].get(element.get_layout_index());
   }
 
   bool Game::is_movable(Cell from, Cell to) const {
@@ -284,11 +284,11 @@ namespace GwanKei {
     }
   }
 
-  Feedback Game::move(Cell from, Cell to, MoveResult force_result /*=Null*/) {
+  Feedback Game::move(Cell from, Cell to, MoveResult force_result /*=0*/) {
     Element from_element = board[from.get_id()];
     Element to_element = board[from.get_id()];
     assert(!from_element.is_empty());
-    assert(from.get_type != Headquarter);
+    assert(from.get_type() != Headquarter);
     bool occupy_state[4631] = {0};
     for(int i=0; i<4631; i++) {
       if(is_valid_cell_id(i)) {
@@ -298,11 +298,11 @@ namespace GwanKei {
     MoveResult result;
     std::list<Cell> route;
     if(!from_element.is_unknown() && !to_element.is_unknown()) {
-      assert(force_result == Null);
+      assert(force_result == Nothing);
       if(!to_element.is_empty()) {
 	result = Piece::attack(piece_of(from_element), piece_of(to_element));
       } else {
-	result = Null;
+	result = Nothing;
       }
       route = get_route(
 	  from, to, occupy_state, piece_of(from_element) == Piece(32)
@@ -311,7 +311,7 @@ namespace GwanKei {
       board[to.get_id()] = from_element;
       board[from.get_id()] = Element();
     } else {
-      assert(force_result != Null);
+      assert(force_result != Nothing);
       result = force_result;
       route = get_route(from, to, occupy_state, true);
       assert(!route.empty());

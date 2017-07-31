@@ -125,11 +125,11 @@ namespace GwanKei {
     Element element_of(Cell cell) const;
     Piece piece_of(Element element) const;
     bool is_movable(Cell from, Cell to) const;
-    Feedback move(Cell from, Cell to, MoveResult force_result = Null);
+    Feedback move(Cell from, Cell to, MoveResult force_result = Nothing);
   };
 
   bool is_valid_game_piece_id(int id);
-  bool is_valid_layout(Piece* data);
+  bool is_valid_layout(const Piece* data);
   bool is_valid_layout_index(int index);
   Orient convert_player_to_orient(Player player);
   Player convert_orient_to_player(Orient orient);
