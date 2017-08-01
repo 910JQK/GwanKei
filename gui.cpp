@@ -19,7 +19,7 @@ Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
 
 
 View::View(QWidget* parent) : QWebEngineView(parent) {
-  load(QUrl(
-    QString("file://") + QApplication::applicationDirPath() + "/board.html"
+  load(QUrl::fromLocalFile(
+      QApplication::applicationDirPath() + "/board.html"
   ));
 }

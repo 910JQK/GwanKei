@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="UTF-8" />
+    <script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js">
+    </script>
+    <script type="text/javascript" src="frontend.js">
+    </script>
     <style>
       body {
       margin: 0;
@@ -16,12 +21,35 @@
       width: 90vh;
       height: 90vh;
       }
-      #board { border: 2px solid black; }
+      #board { border: 2px solid black; }      
+      text { -webkit-user-select: none; }
     </style>
   </head>
   <body>
     <div id="container">
-      <svg id="board" width="200" height="200">
+      <svg id="board" viewBox="-100 -100 200 200">
+	<defs>
+	  <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="translate(-5,0)">
+            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="gray" stroke-width="1" stroke-dasharray="1" />
+	  </pattern>
+	  <rect id="central_grid" width="10" height="10" fill="none" stroke="gray" stroke-width="0.5" stroke-dasharray="1" />
+	  <rect id="player_grid" x="-25" y="30" width="51" height="61" fill="url(#grid)" stroke="none" />
+	</defs>
+	<use xlink:href="#central_grid" x="-5" y="-5" />
+	<use xlink:href="#central_grid" x="15" y="15" />
+	<use xlink:href="#central_grid" x="15" y="15" transform="rotate(90)"/>
+	<use xlink:href="#central_grid" x="15" y="15" transform="rotate(180)"/>
+	<use xlink:href="#central_grid" x="15" y="15" transform="rotate(270)"/>
+	<use xlink:href="#central_grid" x="-5" y="15"/>
+	<use xlink:href="#central_grid" x="-5" y="15" transform="rotate(90)"/>
+	<use xlink:href="#central_grid" x="-5" y="15" transform="rotate(180)"/>
+	<use xlink:href="#central_grid" x="-5" y="15" transform="rotate(270)"/>
+	<use xlink:href="#player_grid" />
+	<use xlink:href="#player_grid" transform="rotate(90)" />
+	<use xlink:href="#player_grid" transform="rotate(180)" />
+	<use xlink:href="#player_grid" transform="rotate(270)" />
+	<g id="pieces">
+	</g>
       </svg>
     </div>
   </body>
