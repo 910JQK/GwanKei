@@ -100,6 +100,10 @@ namespace GwanKei {
     bool is_unknown() const;
     int get_layout_index() const;
     Element& operator = (const Element& right);
+    static Element Unknown(Player player) { return Element(player); };
+    static Element Known(Player player, int layout_index) {
+      return Element(player, layout_index);
+    };
   };
 
   class Feedback {
@@ -110,6 +114,7 @@ namespace GwanKei {
     Feedback();
     Feedback(MoveResult move_result, const std::list<Cell>& route);
     bool is_nothing() const;
+    std::list<Cell> get_route() const;
     Feedback& operator = (const Feedback& right);
   };
 
@@ -118,6 +123,7 @@ namespace GwanKei {
     Element board[4631];
     Layout layout[4];
     bool enabled[4] = {0};
+    Feedback last_feedback;
     void init_board();
   public:
     Game(const Layout& layout_S, const Layout& layout_N, bool EW = false);
@@ -126,6 +132,7 @@ namespace GwanKei {
     Piece piece_of(Element element) const;
     bool is_movable(Cell from, Cell to) const;
     Feedback move(Cell from, Cell to, MoveResult force_result = Nothing);
+    Feedback get_last_feedback() const;
   };
 
   bool is_valid_game_piece_id(int id);

@@ -203,6 +203,10 @@ namespace GwanKei {
     return (move_result == Nothing);
   }
 
+  std::list<Cell> Feedback::get_route() const {
+    return route;
+  }
+
   Feedback& Feedback::operator = (const Feedback& right) {
     this->move_result = right.move_result;
     this->route = right.route;
@@ -318,6 +322,11 @@ namespace GwanKei {
       board[to.get_id()] = from_element;
       board[from.get_id()] = Element();
     }
-    return Feedback(result, route);
+    last_feedback = Feedback(result, route);
+    return last_feedback;
+  }
+
+  Feedback Game::get_last_feedback() const {
+    return last_feedback;
   }
 }
