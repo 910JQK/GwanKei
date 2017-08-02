@@ -1,7 +1,7 @@
 #ifndef GWANKEI_GUI_HPP
 #define GWANKEI_GUI_HPP
 #include <QMainWindow>
-#include <QWebEngineView>
+#include <QWebView>
 
 class Window;
 class View;
@@ -13,7 +13,7 @@ public:
   View* view;
 };
 
-class View : public QWebEngineView {
+class View : public QWebView {
   Q_OBJECT
 public:
   View(QWidget* parent);  

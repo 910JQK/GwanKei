@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QWebSettings>
 #include <QDir>
 #include <QUrl>
 #include "gui.hpp"
@@ -18,7 +19,10 @@ Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
 }
 
 
-View::View(QWidget* parent) : QWebEngineView(parent) {
+View::View(QWidget* parent) : QWebView(parent) {
+  QWebSettings* defaultSettings = QWebSettings::globalSettings();
+  defaultSettings->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
+  defaultSettings->setAttribute(QWebSettings::JavascriptEnabled, true); 
   load(QUrl::fromLocalFile(
       QApplication::applicationDirPath() + "/board.html"
   ));

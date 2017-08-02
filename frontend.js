@@ -1,9 +1,14 @@
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const U = 10; // unit
-const PIECE_WIDTH = 1*U;
+const PIECE_WIDTH = 0.9*U;
 const PIECE_HEIGHT = 0.7*U;
-const PIECE_FONT_SIZE = '4.5px';
-const PIECE_COLOR = ['orange', 'purple', 'green', 'blue'];
+const PIECE_FONT_SIZE = '4.2';
+const PIECE_COLOR = [
+    'hsl(18,100%,20%)',
+    'hsl(290,100%,25%)',
+    'hsl(130,100%,30%)',
+    'hsl(233,100%,20%)'
+];
 const PIECE_TRANSFORM = ['', '', 'rotate(90)', '', 'rotate(-90)'];
 const PIECE_TEXT = [
     '炸彈', '#','#','#','#',
@@ -14,7 +19,7 @@ const PIECE_TEXT = [
     '#','#','#','#','#',
     '#','軍旗','工兵','排長','連長',
     '營長','團長','旅長','師長','軍長',
-    '司令'
+    '司令', '地雷', ''
 ];
 
 
@@ -97,6 +102,8 @@ function draw_piece(player, group, y, x, lr, piece_id) {
 	    y: coor.y,
 	    width: PIECE_WIDTH,
 	    height: PIECE_HEIGHT,
+	    stroke: 'black',
+	    'stroke-width': 0.5,
 	    fill: PIECE_COLOR[player]
 	},
 	{
@@ -111,7 +118,6 @@ function draw_piece(player, group, y, x, lr, piece_id) {
 	    'text-anchor': 'middle',
 	    dy: '1.5',
 	    'font-family': 'sans',
-	    'font-weight': 'bold',
 	    'font-size': PIECE_FONT_SIZE,
 	    fill: 'white'
 	}

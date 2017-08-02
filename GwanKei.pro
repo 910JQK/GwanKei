@@ -1,4 +1,4 @@
-QT       += core gui widgets webenginewidgets
+QT       += core gui widgets webkitwidgets
 
 TARGET = GwanKei
 TEMPLATE = app
