@@ -87,6 +87,16 @@ function get_coordinate(group, y, x, lr) {
 }
 
 
+function cell2coor(id) {
+    return {
+	group: Math.floor(id/1000),
+	y: Math.floor((id%1000)/100),
+	x: Math.floor((id%100)/10),
+	lr: Math.floor(id%10)
+    };
+}
+
+
 function cls() {
     while(pieces.firstChild)
 	pieces.removeChild(pieces.firstChild);
@@ -135,8 +145,24 @@ function draw_piece(player, group, y, x, lr, piece_id) {
 }
 
 
-function init() {
+function update_board(board) {
+    cls();
+    route = [];
+    for(let i=0; i<board.length; i++) {
+	let element = board.at(i);
+	if(element.piece == 43) {
+	    route.push(element);
+	} else if(element) {
+	    let c = cell2coor(element.cell);
+	    draw_piece(element.player, c.group, c.y, c.x, c.lr, element.piece);
+	}
+    }
+    //draw_route(route);
+}
 
+
+function init() {
+    Hub.update_board.connect(update_board);
 }
 
 

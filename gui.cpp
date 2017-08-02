@@ -2,6 +2,9 @@
 #include <QDesktopWidget>
 #include <QWebSettings>
 #include <QWebFrame>
+#include <QMenuBar>
+#include <QMenu>
+#include <QAction>
 #include <QDir>
 #include <QUrl>
 #include "gui.hpp"
@@ -17,6 +20,10 @@ Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
    (desktop->width() - this->width())/2,
    (desktop->height() - this->height())/2
   );
+  test_action = new QAction(tr("&Test"), this);
+  connect(test_action, &QAction::triggered, view, &View::test);
+  debug_menu = menuBar()->addMenu(tr("&Debug"));
+  debug_menu->addAction(test_action);
 }
 
 
@@ -25,11 +32,17 @@ View::View(QWidget* parent) : QWebView(parent) {
   defaultSettings->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
   defaultSettings->setAttribute(QWebSettings::JavascriptEnabled, true);
   hub = new Hub();
-  connect(page()->mainFrame(), SIGNAL(javaScriptWindowObjectCleared()),
-	  this, SLOT(javaScriptWindowObjectCleared()) );
+  connect(page()->mainFrame(), &QWebFrame::javaScriptWindowObjectCleared,
+	  this, &View::javaScriptWindowObjectCleared );
   load(QUrl::fromLocalFile(
       QApplication::applicationDirPath() + "/board.html"
   ));
+}
+
+
+void View::test() {
+  test_board = new Board();
+  hub->update_board(test_board);
 }
 
 
@@ -119,8 +132,14 @@ QString Board::get_mode() const {
 }
 
 
-QList<RenderElement> Board::get_elements() const {
-  return elements;
+int Board::get_length() const {
+  return elements.length();
+}
+
+
+QVariantMap Board::at(int index) const {
+  assert(0 <= index && index < elements.length());
+  return elements[index];
 }
 
 

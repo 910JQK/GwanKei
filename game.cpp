@@ -153,12 +153,12 @@ namespace GwanKei {
 
   Element::Element(Player player) {
     // unknown
-    this->id = 1+player*26+1;
+    this->id = 1+player*26;
   }
 
   Element::Element(Player player, int layout_index) {
     assert(is_valid_layout_index(layout_index));
-    this->id = 1+player*26+(layout_index+1)+1;
+    this->id = 1+player*26+(layout_index+1);
   }
 
   int Element::get_id() const {
@@ -180,7 +180,6 @@ namespace GwanKei {
 
   int Element::get_layout_index() const {
     assert(!is_empty());
-    assert(!is_unknown());
     return ((id-1)%26 - 1);
   }
 
