@@ -41,8 +41,9 @@ View::View(QWidget* parent) : QWebView(parent) {
 
 
 void View::test() {
-  test_board = new Board();
+  Board* test_board = new Board();
   hub->update_board(test_board);
+  // release memory in front end
 }
 
 
@@ -82,7 +83,7 @@ RenderElement RenderElementFromPiece(Cell cell, Element element, Piece piece) {
 
 
 Board::Board(Layout initial_layout /* = Layout() */) : QObject() {
-  mode = Preparing;
+  mode_value = Preparing;
   for(int i=0; i<25; i++) {
     elements.push_back(
 	RenderElementFromPiece(
@@ -97,9 +98,9 @@ Board::Board(Layout initial_layout /* = Layout() */) : QObject() {
 
 Board::Board(const Game& game, bool is_watching) : QObject() {
   if(is_watching)
-    mode = Watching;
+    mode_value = Watching;
   else
-    mode = Playing;
+    mode_value = Playing;
   for(int i=0; i<4631; i++) {
     if(is_valid_cell_id(i)) {
       Element e = game.element_of(i);
@@ -123,9 +124,9 @@ Board::Board(const Game& game, bool is_watching) : QObject() {
 
 
 QString Board::get_mode() const {
-  if(mode == Preparing)
+  if(mode_value == Preparing)
     return "preparing";
-  else if(mode == Playing)
+  else if(mode_value == Playing)
     return "playing";
   else
     return "watching";
@@ -145,4 +146,10 @@ QVariantMap Board::at(int index) const {
 
 Hub::Hub() : QObject() {
 
+}
+
+
+Hub::~Hub() {
+  if(started)
+    delete game;
 }

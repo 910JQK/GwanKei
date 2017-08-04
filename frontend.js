@@ -23,6 +23,10 @@ const PIECE_TEXT = [
 ];
 
 
+var cell_data = {};
+var mode = 'preparing';
+
+
 class InvalidArgumentException extends Error {};
 
 
@@ -147,6 +151,8 @@ function draw_piece(player, group, y, x, lr, piece_id) {
 
 function update_board(board) {
     cls();
+    mode = board.mode;
+    cell_data = {};
     route = [];
     for(let i=0; i<board.length; i++) {
 	let element = board.at(i);
@@ -155,8 +161,13 @@ function update_board(board) {
 	} else if(element) {
 	    let c = cell2coor(element.cell);
 	    draw_piece(element.player, c.group, c.y, c.x, c.lr, element.piece);
+	    cell_data[element.cell] = {
+		player: element.player,
+		layout_index: element.layout_index
+	    };
 	}
     }
+    board.deleteLater();
     //draw_route(route);
 }
 

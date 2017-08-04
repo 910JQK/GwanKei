@@ -33,7 +33,6 @@ private:
 public:
   View(QWidget* parent);
   void test();
-  Board* test_board;
 public slots:
   void javaScriptWindowObjectCleared();
 };
@@ -51,10 +50,10 @@ RenderElement RenderElementFromPiece(Cell cell, Element element, Piece piece);
 
 class Board : public QObject {
   Q_OBJECT
-  Q_PROPERTY(QString mode_str READ get_mode);
+  Q_PROPERTY(QString mode READ get_mode);
   Q_PROPERTY(int length READ get_length);
 private:
-  BoardMode mode;
+  BoardMode mode_value;
   QList<RenderElement> elements;
 public:
   Board(Layout initial_layout = Layout());
@@ -68,6 +67,11 @@ class Hub : public QObject {
   Q_OBJECT
 public:
   Hub();
+  ~Hub();
+  Game* game;
+  bool started = false;
+  Layout layout;
+  Player player;
 signals:
   void update_board(Board* board);
   /*

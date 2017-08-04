@@ -7,6 +7,23 @@
 
 namespace GwanKei {
 
+  /**
+     Layout Index
+
+     [15] = [21] = [00] = [11] = [05]
+      ||  \      /  |   \      /  ||
+     [16] - (  ) - [01] - (  ) - [06]
+      ||  /      \  |   /      \  ||
+     [17] - [22] - (  ) - [12] - [07]
+      ||  \      /  |   \      /  ||
+     [18] - (  ) - [02] - (  ) - [08]
+      ||  /      \  |   /      \  ||
+     [19] = [23] = [03] = [13] = [09]
+      |      |      |       |      |
+     [20] - {24} - [04] - {14} - [10]
+
+   */
+
   const int PIECES[12] = {00,31,32,33,34,35,36,37,38,39,40,41};
   
   const int NUMBER_OF_PIECES[42] = {
@@ -60,6 +77,7 @@ namespace GwanKei {
     21,-1,22,-1,23,24
   };
 
+  /* 佈局 */
   class Layout {
   private:
     Piece data[25] = {
@@ -69,7 +87,7 @@ namespace GwanKei {
       37,00,39,33,41,33,
       32,34,41,33
     };
-    bool masked = false;
+    bool masked = false; // true: 未知佈局（顯示為無字棋子）
   public:
     Layout(bool masked = false);
     Layout(const Piece* data);
@@ -82,22 +100,47 @@ namespace GwanKei {
     Layout& operator = (const Layout& right);
   };
 
+  /* 玩家，與 1,2,3,4 of Orient / CellGroup 對應 */
   enum Player {
     Orange, Purple, Green, Blue
   };
 
+  /* 棋盤格子中填充的元素 */
+  /* 對於一般棋子，映射到 Layout 上，不直接記錄信息 */
   class Element {
   private:
-    int id = 0; // empty
+    int id = 0;
+    /**
+       |------|-------------------------------|
+       |  ID  |              意義             |
+       |------|-------------------------------|
+       |  00  |              空位             |
+       |  01  |  #0 玩家 (Orange) 的未知棋子  |
+       |  02  |  #0 layout index = 0 的棋子   |
+       |  03  |  #0 layout index = 1 的棋子   |
+       |  04  |  #0 layout index = 2 的棋子   |
+       |  ..  |  #0 layout index = .......    |
+       |  27  |  #1 玩家 (Purple) 的未知棋子  |
+       |  28  |  #1 player, layout index = 0  |
+       |  29  |  #1 player, layout index = 1  |
+       |  30  |  #1 player, layout index = 2  |
+       |  ..  |  #1 layout index = .......    |
+       |  53  |  #2 玩家 (Green) 的未知棋子   |
+       |  ..  |  #2 layout index = .......    |
+       |  79  |  #3 玩家 (Blue)  的未知棋子   |
+       |  ..  |  #3 layout index = .......    |
+       |  104 |  #3 player, layout index = 24 |
+       |------|-------------------------------|
+     */
   public:
     Element();
     Element(int id);
     Element(Player player);
     Element(Player player, int layout_index);
     int get_id() const;
-    bool is_empty() const;
+    bool is_empty() const; // 空位？
     Player get_player() const;
-    bool is_unknown() const;
+    bool is_unknown() const; // 未知？
     int get_layout_index() const;
     Element& operator = (const Element& right);
     static Element Unknown(Player player) { return Element(player); };
@@ -106,10 +149,11 @@ namespace GwanKei {
     };
   };
 
+  /* 玩家進行一次操作後得到的結果 */
   class Feedback {
   private:
-    MoveResult move_result = Nothing;
-    std::list<Cell> route;
+    MoveResult move_result = Nothing; // 碰子結果，若只是移動未碰子則為 Nothing
+    std::list<Cell> route; // 棋子行進路線
   public:
     Feedback();
     Feedback(MoveResult move_result, const std::list<Cell>& route);
@@ -118,6 +162,7 @@ namespace GwanKei {
     Feedback& operator = (const Feedback& right);
   };
 
+  /* 遊戲操作 Object, 不含回合信息 */
   class Game {
   private:
     Element board[4631];
