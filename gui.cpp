@@ -41,7 +41,7 @@ View::View(QWidget* parent) : QWebView(parent) {
 
 
 void View::test() {
-  Board* test_board = new Board();
+  Board* test_board = new Board(Layout(), Blue);
   hub->update_board(test_board);
   // release memory in front end
 }
@@ -82,13 +82,16 @@ RenderElement RenderElementFromPiece(Cell cell, Element element, Piece piece) {
 }
 
 
-Board::Board(Layout initial_layout /* = Layout() */) : QObject() {
+Board::Board(Layout initial_layout, Player perspective) : QObject() {
   mode_value = Preparing;
+  perspective_value = perspective;
   for(int i=0; i<25; i++) {
     elements.push_back(
 	RenderElementFromPiece(
-	    convert_layout_index_to_cell(i),
-	    Element::Known(Orange, i),
+	    convert_layout_index_to_cell(
+		i, convert_player_to_orient(perspective)
+	    ),
+	    Element::Known(perspective, i),
 	    initial_layout.get(i)
 	)
     );
@@ -96,11 +99,12 @@ Board::Board(Layout initial_layout /* = Layout() */) : QObject() {
 }
 
 
-Board::Board(const Game& game, bool is_watching) : QObject() {
+Board::Board(const Game& game, Player perspective, bool is_watching) : QObject() {
   if(is_watching)
     mode_value = Watching;
   else
     mode_value = Playing;
+  perspective_value = perspective;
   for(int i=0; i<4631; i++) {
     if(is_valid_cell_id(i)) {
       Element e = game.element_of(i);
@@ -135,6 +139,11 @@ QString Board::get_mode() const {
 
 int Board::get_length() const {
   return elements.length();
+}
+
+
+int Board::get_perspective() const {
+  return perspective_value;
 }
 
 

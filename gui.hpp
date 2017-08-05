@@ -52,14 +52,17 @@ class Board : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString mode READ get_mode);
   Q_PROPERTY(int length READ get_length);
+  Q_PROPERTY(int perspective READ get_perspective)
 private:
   BoardMode mode_value;
+  Player perspective_value;
   QList<RenderElement> elements;
 public:
-  Board(Layout initial_layout = Layout());
-  Board(const Game& game, bool is_watching);
+  Board(Layout initial_layout = Layout(), Player perspective = Orange);
+  Board(const Game& game, Player perspective, bool is_watching);
   QString get_mode() const;
   int get_length() const;
+  int get_perspective() const;
   Q_INVOKABLE QVariantMap at(int index) const;
 };
 
