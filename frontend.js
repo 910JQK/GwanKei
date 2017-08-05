@@ -178,10 +178,29 @@ function draw_piece(player, group, y, x, lr, piece_id) {
     g_tag.appendChild(text_tag);
     pieces.appendChild(g_tag);
     g_tag.addEventListener('click', function(ev) {
-	if(mode == 'preparing' || mode == 'playing') {
-	    select_cell(coor2cell(group, y, x, lr));
-	}
+	var cell = coor2cell(group, y, x, lr);
 	ev.stopPropagation();
+	if(selected_cell != -1) {
+	    if(mode == 'preparing') {
+		if(selected_cell != cell) {
+		    let args = [
+			cell_data[selected_cell].layout_index,
+			cell_data[cell].layout_index
+		    ];
+		    if(Hub.is_layout_able_to_swap(args[0], args[1])) {
+			Hub.submit_layout_swap(args[0], args[1]);
+		    } else {
+			select_cell(cell);
+		    }
+		}
+	    } else if(mode == 'playing') {
+		select_cell(cell);
+	    }
+	} else {
+	    if(mode == 'preparing' || mode == 'playing') {
+		select_cell(cell);
+	    }
+	}
     });
     return g_tag;
 }
@@ -202,7 +221,7 @@ function cancel_select() {
 }
 
 
-function update_board(board) {
+function board_updated(board) {
     cls();
     mode = board.mode;
     cell_data = {};
@@ -231,7 +250,7 @@ function update_board(board) {
 
 function init() {
     document.body.addEventListener('click', cancel_select);
-    Hub.update_board.connect(update_board);
+    Hub.board_updated.connect(board_updated);
 }
 
 

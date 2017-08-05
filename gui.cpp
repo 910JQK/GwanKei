@@ -41,9 +41,7 @@ View::View(QWidget* parent) : QWebView(parent) {
 
 
 void View::test() {
-  Board* test_board = new Board(Layout(), Blue);
-  hub->update_board(test_board);
-  // release memory in front end
+  hub->init(Orange, Layout());
 }
 
 
@@ -161,4 +159,31 @@ Hub::Hub() : QObject() {
 Hub::~Hub() {
   if(started)
     delete game;
+}
+
+
+void Hub::update_board() {
+  if(!started) {
+    Board* board = new Board(layout, player);
+    board_updated(board);
+  }
+  // release memory in frontend
+}
+
+
+void Hub::init(Player player, Layout layout) {
+  this->player = player;
+  this->layout = layout;
+  update_board();
+}
+
+
+bool Hub::is_layout_able_to_swap(int index1, int index2) {
+  return layout.is_able_to_swap(index1, index2);
+}
+
+
+void Hub::submit_layout_swap(int index1, int index2) {
+  layout.swap(index1, index2);
+  update_board();
 }

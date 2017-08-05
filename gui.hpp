@@ -68,20 +68,21 @@ public:
 
 class Hub : public QObject {
   Q_OBJECT
-public:
-  Hub();
-  ~Hub();
+private:
   Game* game;
   bool started = false;
   Layout layout;
   Player player;
+public:
+  Hub();
+  ~Hub();
+  void update_board();
+  void init(Player player, Layout layout);
+  Q_INVOKABLE bool is_layout_able_to_swap(int index1, int index2);
+  Q_INVOKABLE void submit_layout_swap(int index1, int index2);
+  // Q_INVOKABLE void submit_move(int from, int to);
 signals:
-  void update_board(Board* board);
-  /*
-public slots:  
-  void submit_layout(const QList<int>& layout);
-  void submit_move(int from, int to);
-  */
+  void board_updated(Board* board);
 };
 
 #endif // GWANKEI_GUI_HPP
