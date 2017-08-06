@@ -127,6 +127,9 @@ function cls() {
 
 function draw_piece(player, group, y, x, lr, piece_id) {
     var coor = get_coordinate(group, y, x, lr);
+    var empty = false;
+    if(piece_id == -1)
+	empty = true;
     if(mode == 'preparing' && player == perspective)
 	cursor = 'pointer';
     else if(mode == 'playing' && player == perspective)
@@ -140,9 +143,9 @@ function draw_piece(player, group, y, x, lr, piece_id) {
 	    y: coor.y,
 	    width: PIECE_WIDTH,
 	    height: PIECE_HEIGHT,
-	    stroke: 'black',
+	    stroke: (empty)? 'none': 'black',
 	    'stroke-width': 0.5,
-	    fill: PIECE_COLOR[player],
+	    fill: (empty)? 'none': PIECE_COLOR[player],
 	},
 	{
 	    transform: 'translate(-50%,-50%)'
@@ -163,7 +166,10 @@ function draw_piece(player, group, y, x, lr, piece_id) {
 	    cursor: 'inherit'
 	}
     );
-    text_tag.textContent = PIECE_TEXT[piece_id];
+    if(!empty)
+	text_tag.textContent = PIECE_TEXT[piece_id];
+    else
+	text_tag.textContent = '';
     var g_tag = create_tag(
 	'g',
 	{
@@ -173,14 +179,17 @@ function draw_piece(player, group, y, x, lr, piece_id) {
 	    cursor: cursor
 	}
     );
-    g_tag.classList.add('piece');
+    if(!empty)
+	g_tag.classList.add('piece');
+    else
+	g_tag.classList.add('placeholder');
     g_tag.appendChild(rect_tag);
     g_tag.appendChild(text_tag);
     pieces.appendChild(g_tag);
     g_tag.addEventListener('click', function(ev) {
 	var cell = coor2cell(group, y, x, lr);
 	ev.stopPropagation();
-	if(selected_cell != -1) {
+	if(!empty && selected_cell != -1) {
 	    if(mode == 'preparing') {
 		if(selected_cell != cell) {
 		    let args = [
@@ -188,7 +197,7 @@ function draw_piece(player, group, y, x, lr, piece_id) {
 			cell_data[cell].layout_index
 		    ];
 		    if(Hub.is_layout_able_to_swap(args[0], args[1])) {
-			Hub.submit_layout_swap(args[0], args[1]);
+			Hub.layout_swap(args[0], args[1]);
 		    } else {
 			select_cell(cell);
 		    }
@@ -221,7 +230,7 @@ function cancel_select() {
 }
 
 
-function board_updated(board) {
+function render(board) {
     cls();
     mode = board.mode;
     cell_data = {};
@@ -250,7 +259,7 @@ function board_updated(board) {
 
 function init() {
     document.body.addEventListener('click', cancel_select);
-    Hub.board_updated.connect(board_updated);
+    Hub.render.connect(render);
 }
 
 

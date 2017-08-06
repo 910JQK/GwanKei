@@ -98,6 +98,7 @@ namespace GwanKei {
     void swap(int index1, int index2);
     std::string to_string() const;
     Layout& operator = (const Layout& right);
+    static Layout Masked() { return Layout(true); };
   };
 
   /* 玩家，與 1,2,3,4 of Orient / CellGroup 對應 */
@@ -162,6 +163,12 @@ namespace GwanKei {
     Feedback& operator = (const Feedback& right);
   };
 
+  /* 亮棋模式 */
+  enum MaskMode {
+    NoExpose, DoubleExpose, AllExpose
+    /* 四暗，雙明，全明 */
+  };
+
   /* 遊戲操作 Object, 不含回合信息 */
   class Game {
   private:
@@ -171,6 +178,7 @@ namespace GwanKei {
     Feedback last_feedback;
     void init_board();
   public:
+    Game() {};
     Game(const Layout& layout_S, const Layout& layout_N, bool EW = false);
     Game(const Layout* layouts);
     Element element_of(Cell cell) const;
@@ -178,6 +186,10 @@ namespace GwanKei {
     bool is_movable(Cell from, Cell to) const;
     Feedback move(Cell from, Cell to, MoveResult force_result = Nothing);
     Feedback get_last_feedback() const;
+    Game get_game_with_mask(
+        Player perspective, MaskMode mask_mode = NoExpose
+    ) const;
+    Game& operator = (const Game& right);
   };
 
   bool is_valid_game_piece_id(int id);

@@ -5,8 +5,10 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
 	gui.cpp \
+	desk.cpp \
 	game.cpp \
 	core.cpp
 HEADERS += gui.hpp \
+           desk.hpp \
            game.hpp \
            core.hpp

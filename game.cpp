@@ -1,3 +1,4 @@
+#include <cstring>
 #include <cassert>
 #include "game.hpp"
 
@@ -136,8 +137,7 @@ namespace GwanKei {
   }
 
   Layout& Layout::operator = (const Layout& right) {
-    for(int i=0; i<25; i++)
-      data[i] = right.data[i];
+    std::copy(right.data, right.data+25, data);
     this->masked = right.masked;
     return *this;
   }
@@ -287,7 +287,7 @@ namespace GwanKei {
     }
   }
 
-  Feedback Game::move(Cell from, Cell to, MoveResult force_result /*=0*/) {
+  Feedback Game::move(Cell from, Cell to, MoveResult force_result) {
     Element from_element = board[from.get_id()];
     Element to_element = board[from.get_id()];
     assert(!from_element.is_empty());
@@ -327,5 +327,26 @@ namespace GwanKei {
 
   Feedback Game::get_last_feedback() const {
     return last_feedback;
+  }
+
+  Game Game::get_game_with_mask(Player perspective, MaskMode mask_mode) const {
+    Game result = *this;
+    if(mask_mode == NoExpose) {
+      result.layout[(perspective+1)%4] = Layout::Masked();
+      result.layout[(perspective+2)%4] = Layout::Masked();
+      result.layout[(perspective+3)%4] = Layout::Masked();
+    } else if(mask_mode == DoubleExpose) {
+      result.layout[(perspective+1)%4] = Layout::Masked();
+      result.layout[(perspective+3)%4] = Layout::Masked();
+    }
+    return result;
+  }
+
+  Game& Game::operator = (const Game& right) {
+    memcpy(board, right.board, 4631*sizeof(Element));
+    memcpy(layout, right.layout, 4*sizeof(Layout));
+    memcpy(enabled, right.enabled, 4*sizeof(bool));
+    last_feedback = right.last_feedback;
+    return *this;
   }
 }

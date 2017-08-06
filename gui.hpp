@@ -3,8 +3,10 @@
 #include <QMainWindow>
 #include <QWebView>
 #include <QObject>
+#include <QList>
+#include <QString>
 #include <QVariantMap>
-#include "game.hpp"
+#include "desk.hpp"
 
 using namespace GwanKei;
 
@@ -38,15 +40,45 @@ public slots:
 };
 
 enum BoardMode {
-  Preparing, Playing, Watching
+  Preparing, Waiting, Playing, Watching
 };
-
 
 typedef QVariantMap RenderElement;
 
+RenderElement RenderElementFromEmptyCell(Cell cell);
+
 RenderElement RenderElementFromRouteNode(Cell cell);
+
 RenderElement RenderElementFromUnknownPiece(Cell cell, Element element);
+
 RenderElement RenderElementFromPiece(Cell cell, Element element, Piece piece);
+
+class Hub : public QObject {
+  Q_OBJECT
+private:
+  bool started = false;
+  Game game;
+  Layout layout;
+  Player player;
+  Player current_player;
+public:
+  void execute_render();
+  void init(Player player, Layout layout);
+  Q_INVOKABLE bool is_layout_able_to_swap(int index1, int index2) const;
+  Q_INVOKABLE void layout_swap(int index1, int index2);
+  Q_INVOKABLE bool is_movable(int from, int to) const;
+signals:
+  /* -- Signals Emitted from Frontend -- */
+  void submit_ready();
+  void submit_move(int from, int to);
+  void submit_update_request();
+  /* -- Signals for Rendering -- */
+  void render(Board* board);
+  void set_clock(int wait_seconds);
+  void game_started();
+public slots:
+  void status_changed(Game game, Player current_player, int wait_seconds);
+};
 
 class Board : public QObject {
   Q_OBJECT
@@ -64,25 +96,6 @@ public:
   int get_length() const;
   int get_perspective() const;
   Q_INVOKABLE QVariantMap at(int index) const;
-};
-
-class Hub : public QObject {
-  Q_OBJECT
-private:
-  Game* game;
-  bool started = false;
-  Layout layout;
-  Player player;
-public:
-  Hub();
-  ~Hub();
-  void update_board();
-  void init(Player player, Layout layout);
-  Q_INVOKABLE bool is_layout_able_to_swap(int index1, int index2);
-  Q_INVOKABLE void submit_layout_swap(int index1, int index2);
-  // Q_INVOKABLE void submit_move(int from, int to);
-signals:
-  void board_updated(Board* board);
 };
 
 #endif // GWANKEI_GUI_HPP

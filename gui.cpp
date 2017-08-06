@@ -50,12 +50,71 @@ void View::javaScriptWindowObjectCleared() {
 }
 
 
+void Hub::execute_render() {
+  if(!started) {
+    Board* board = new Board(layout, player);
+    render(board);
+  } else {
+    Board* board = new Board(game, player, player != current_player);
+    render(board);
+  }
+  // release memory in frontend
+}
+
+
+void Hub::init(Player player, Layout layout) {
+  this->player = player;
+  this->layout = layout;
+  execute_render();
+}
+
+
+bool Hub::is_layout_able_to_swap(int index1, int index2) const {
+  return layout.is_able_to_swap(index1, index2);
+}
+
+
+void Hub::layout_swap(int index1, int index2) {
+  layout.swap(index1, index2);
+  execute_render();
+}
+
+
+bool Hub::is_movable(int from, int to) const {
+  if(!started)
+    return false;
+  return game.is_movable(Cell(from), Cell(to));
+}
+
+
+void Hub::status_changed(Game game, Player current_player, int wait_seconds) {
+  if(!started) {
+    started = started;
+    game_started();
+  }
+  this->game = game;
+  this->current_player = current_player;
+  execute_render();
+  set_clock(wait_seconds);
+}
+
+
+RenderElement RenderElementFromEmptyCell(Cell cell) {
+  RenderElement result;
+  result["cell"] = cell.get_id();
+  result["piece"] = -1;
+  result["player"] = -1;
+  result["layout_index"] = -1;
+  return result;
+}
+
+
 RenderElement RenderElementFromRouteNode(Cell cell) {
   RenderElement result;
   result["cell"] = cell.get_id();
   result["piece"] = 43;
-  result["player"] = 0;
-  result["layout_index"] = 0;
+  result["player"] = -1;
+  result["layout_index"] = -1;
   return result;
 }
 
@@ -113,6 +172,8 @@ Board::Board(const Game& game, Player perspective, bool is_watching) : QObject()
 	  elements.push_back(RenderElementFromPiece(
 			         Cell(i), e, game.piece_of(e))
 			     );
+      } else {
+	elements.push_back(RenderElementFromEmptyCell(Cell(i)) );
       }
     }
   }
@@ -148,42 +209,4 @@ int Board::get_perspective() const {
 QVariantMap Board::at(int index) const {
   assert(0 <= index && index < elements.length());
   return elements[index];
-}
-
-
-Hub::Hub() : QObject() {
-
-}
-
-
-Hub::~Hub() {
-  if(started)
-    delete game;
-}
-
-
-void Hub::update_board() {
-  if(!started) {
-    Board* board = new Board(layout, player);
-    board_updated(board);
-  }
-  // release memory in frontend
-}
-
-
-void Hub::init(Player player, Layout layout) {
-  this->player = player;
-  this->layout = layout;
-  update_board();
-}
-
-
-bool Hub::is_layout_able_to_swap(int index1, int index2) {
-  return layout.is_able_to_swap(index1, index2);
-}
-
-
-void Hub::submit_layout_swap(int index1, int index2) {
-  layout.swap(index1, index2);
-  update_board();
 }
