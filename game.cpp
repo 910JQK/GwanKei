@@ -259,7 +259,7 @@ namespace GwanKei {
 
   bool Game::is_movable(Cell from, Cell to) const {
     Element from_element = board[from.get_id()];
-    Element to_element = board[from.get_id()];
+    Element to_element = board[to.get_id()];
     if(from_element.is_empty() || from_element.is_unknown()) {
       return false;      
     } else if(from.get_type() == Headquarter) {
@@ -287,7 +287,7 @@ namespace GwanKei {
 
   Feedback Game::move(Cell from, Cell to, MoveResult force_result) {
     Element from_element = board[from.get_id()];
-    Element to_element = board[from.get_id()];
+    Element to_element = board[to.get_id()];
     assert(!from_element.is_empty());
     assert(from.get_type() != Headquarter);
     bool occupy_state[4631] = {0};
@@ -309,14 +309,22 @@ namespace GwanKei {
 	  from, to, occupy_state, piece_of(from_element) == Piece(32)
       );
       assert(!route.empty());
-      board[to.get_id()] = from_element;
+      if(result == Nothing || result == Bigger) {
+	board[to.get_id()] = from_element;
+      } else if(result == Equal) {
+	board[to.get_id()] = Element();
+      }
       board[from.get_id()] = Element();
     } else {
       assert(force_result != Nothing);
       result = force_result;
       route = get_route(from, to, occupy_state, true);
       assert(!route.empty());
-      board[to.get_id()] = from_element;
+      if(result == Nothing || result == Bigger) {
+	board[to.get_id()] = from_element;
+      } else if(result == Equal) {
+	board[to.get_id()] = Element();
+      }
       board[from.get_id()] = Element();
     }
     last_feedback = Feedback(result, route);
@@ -332,10 +340,11 @@ namespace GwanKei {
     auto set_unknown = [&result, perspective](int delta) {
       Player player = static_cast<Player>((perspective+delta)%4);
       result.layout[player] = Layout::Masked();
-      for(int j=0; j<25; j++) {
-	result.board[
-	  convert_layout_index_to_cell(j, player).get_id()
-	].set_unknown();
+      for(int j=0; j<4631; j++) {
+	if(is_valid_cell_id(j))
+	  if(!result.board[j].is_empty()
+	     && result.board[j].get_player() == player)
+	    result.board[j].set_unknown();
       }
     };
     if(mask_mode == NoExpose) {

@@ -21,9 +21,12 @@ Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
    (desktop->height() - this->height())/2
   );
   test_action = new QAction(tr("&Test"), this);
+  ready_action = new QAction(tr("&Ready"), this);
   connect(test_action, &QAction::triggered, view, &View::test);
+  connect(ready_action, &QAction::triggered, view->hub, &Hub::submit_ready);
   debug_menu = menuBar()->addMenu(tr("&Debug"));
   debug_menu->addAction(test_action);
+  debug_menu->addAction(ready_action);
 }
 
 
@@ -209,10 +212,9 @@ Board::Board(const Game& game, Player perspective, bool is_watching) : QObject()
     }
   }
   Feedback last_feedback = game.get_last_feedback();
-  if(!last_feedback.is_nothing()) {
-    std::list<Cell> route = last_feedback.get_route();
-    for(auto I=route.begin(); I!=route.end(); I++)
-      elements.push_back(RenderElementFromRouteNode(*I));
+  std::list<Cell> route = last_feedback.get_route();
+  for(auto I=route.begin(); I!=route.end(); I++) {
+    elements.push_back(RenderElementFromRouteNode(*I));
   }
 }
 

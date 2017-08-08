@@ -23,6 +23,7 @@ class Window : public QMainWindow {
 private:
   QMenu* debug_menu;
   QAction* test_action;
+  QAction* ready_action;
 public:
   Window(QApplication* app, QWidget* parent = nullptr);
   View* view;
@@ -31,10 +32,10 @@ public:
 class View : public QWebView {
   Q_OBJECT
 private:
-  Hub* hub;
   Desk* desk;
 public:
   View(QWidget* parent);
+  Hub* hub;
   void test();
 public slots:
   void javaScriptWindowObjectCleared();

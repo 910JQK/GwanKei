@@ -127,7 +127,7 @@ namespace GwanKei {
       return false;
     if(digit[0] != 0 && digit[0] != 1)
       return false;
-    if(digit[3] == 0) {
+    if(digit[3] == 0 && digit[0] == 0) {
       if(id == 0) {
 	return true;
       } else if(digit[2] >= 1 && digit[2] <= 4) {
@@ -141,10 +141,14 @@ namespace GwanKei {
 	return false;
       }
     } else if(digit[3] >= 1 && digit[3] <= 4) {
-      if(digit[2] >= 1 && digit[2] <= 6 && digit[1] >= 1 && digit[1] <= 3)
-	return true;
-      else
+      if(digit[2] >= 1 && digit[2] <= 6 && digit[1] >= 1 && digit[1] <= 3) {
+	if(digit[1] == 3 && digit[0] == 1)
+	  return false;
+	else
+	  return true;
+      } else {
 	return false;
+      }
     } else {
       return false;
     }

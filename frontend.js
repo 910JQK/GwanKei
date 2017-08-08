@@ -24,6 +24,7 @@ const PIECE_TEXT = [
 
 
 var timer;
+var route = [];
 var cell_data = {};
 var mode = 'preparing';
 var perspective = 0;
@@ -71,7 +72,7 @@ function get_relative_group(group) {
 }
 
 
-function get_coordinate(group, y, x, lr) {
+function get_rendering_coor(group, y, x, lr) {
     check_integer(group, y, x, lr);
     group = get_relative_group(group);
     function coor(a, b, rotate = 1) {
@@ -121,16 +122,18 @@ function coor2cell(group, y, x, lr) {
 
 function cls() {
     cancel_select();
-    while(pieces.firstChild)
-	pieces.removeChild(pieces.firstChild);
+    for(let g of [route_signs, pieces])
+	while(g.firstChild)
+	    g.removeChild(g.firstChild);
 }
 
 
 function draw_piece(player, group, y, x, lr, piece_id) {
-    var coor = get_coordinate(group, y, x, lr);
+    var coor = get_rendering_coor(group, y, x, lr);
     var empty = false;
     if(piece_id == -1)
 	empty = true;
+    let cursor = 'default';
     if(mode == 'preparing' && player == perspective)
 	cursor = 'pointer';
     else if(mode == 'playing' && player == perspective)
@@ -146,7 +149,7 @@ function draw_piece(player, group, y, x, lr, piece_id) {
 	    height: PIECE_HEIGHT,
 	    stroke: (empty)? 'none': 'black',
 	    'stroke-width': 0.5,
-	    fill: (empty)? 'none': PIECE_COLOR[player]
+	    fill: (empty)? 'hsla(0,0%,0%,0)': PIECE_COLOR[player]
 	},
 	{
 	    transform: 'translate(-50%,-50%)'
@@ -189,30 +192,78 @@ function draw_piece(player, group, y, x, lr, piece_id) {
     pieces.appendChild(g_tag);
     g_tag.addEventListener('click', function(ev) {
 	var cell = coor2cell(group, y, x, lr);
+	var player_of_cell = player;
 	ev.stopPropagation();
-	if(!empty && selected_cell != -1) {
-	    if(mode == 'preparing') {
-		if(selected_cell != cell) {
-		    let args = [
-			cell_data[selected_cell].layout_index,
-			cell_data[cell].layout_index
-		    ];
-		    if(Hub.is_layout_able_to_swap(args[0], args[1])) {
-			Hub.layout_swap(args[0], args[1]);
-		    } else {
-			select_cell(cell);
+	if(selected_cell != -1) {
+	    if(!empty) {
+		if(mode == 'preparing') {
+		    if(selected_cell != cell) {
+			let args = [
+			    cell_data[selected_cell].layout_index,
+			    cell_data[cell].layout_index
+			];
+			if(Hub.is_layout_able_to_swap(args[0], args[1])) {
+			    Hub.layout_swap(args[0], args[1]);
+			} else {
+			    select_cell(cell);
+			}
+		    }
+		} else if(mode == 'playing') {
+		    if(selected_cell != cell) {
+			if(perspective == player_of_cell) {
+			    select_cell(cell);
+			} else if(player_of_cell != (perspective+2)%4) {
+			    Hub.submit_move(selected_cell, cell);
+			}
 		    }
 		}
-	    } else if(mode == 'playing') {
-		select_cell(cell);
+	    } else {
+		if(mode == 'playing') {
+		    Hub.submit_move(selected_cell, cell);
+		}
 	    }
 	} else {
-	    if(mode == 'preparing' || mode == 'playing') {
+	    if(mode == 'preparing') {
 		select_cell(cell);
+	    } else if(mode == 'playing') {
+		if(perspective == player_of_cell) {
+		    select_cell(cell);
+		}
 	    }
 	}
+	console.log(`CLICK ${cell}`);
     });
     return g_tag;
+}
+
+
+function draw_route(route_arr) {    
+    function get_rc(element) {
+	let c = cell2coor(element.cell);
+	return get_rendering_coor(c.group, c.y, c.x, c.lr);
+    }
+    console.log('-------------');
+    for(let i=0; i<route_arr.length-1; i++) {	
+	let rc = get_rc(route_arr[i]);
+	let next_rc = get_rc(route_arr[i+1]);
+	let vector = {x: (next_rc.x - rc.x), y: (next_rc.y - rc.y)};
+	let theta = Math.round(Math.atan2(vector.y, vector.x)*180/Math.PI);
+	console.log(`[${route_arr[i].cell}] (${rc.x},${rc.y}), ${theta}`);
+	let text = create_tag(
+	    'text',
+	    {
+		x: rc.x,
+		y: rc.y,
+		'text-anchor': 'middle',
+		dy: 1,
+		'font-size': '8',
+		fill: 'red',
+		transform: `translate(${rc.x},${rc.y}) rotate(${theta}) translate(${-rc.x},${-rc.y})`
+	    }
+	);
+	text.textContent = '\u2192';
+	route_signs.appendChild(text);
+    }
 }
 
 
@@ -242,7 +293,6 @@ function render(board) {
 	let element = board.at(i);
 	if(element.piece == 43) {
 	    route.push(element);
-	    // draw route
 	} else if(element) {
 	    let c = cell2coor(element.cell);
 	    let tag = draw_piece(
@@ -256,6 +306,7 @@ function render(board) {
 	    };
 	}
     }
+    draw_route(route);
     board.deleteLater();
 }
 
