@@ -23,6 +23,7 @@ const PIECE_TEXT = [
 ];
 
 
+var timer;
 var cell_data = {};
 var mode = 'preparing';
 var perspective = 0;
@@ -135,7 +136,7 @@ function draw_piece(player, group, y, x, lr, piece_id) {
     else if(mode == 'playing' && player == perspective)
 	cursor = 'pointer';
     else
-	cursor = 'default'
+	cursor = 'default';
     var rect_tag = create_tag(
 	'rect',
 	{
@@ -145,7 +146,7 @@ function draw_piece(player, group, y, x, lr, piece_id) {
 	    height: PIECE_HEIGHT,
 	    stroke: (empty)? 'none': 'black',
 	    'stroke-width': 0.5,
-	    fill: (empty)? 'none': PIECE_COLOR[player],
+	    fill: (empty)? 'none': PIECE_COLOR[player]
 	},
 	{
 	    transform: 'translate(-50%,-50%)'
@@ -225,12 +226,13 @@ function select_cell(cell) {
 function cancel_select() {
     if(selected_cell != -1) {
 	cell_data[selected_cell].svg_tag.classList.remove('selected');
-	selected_cell = -1
+	selected_cell = -1;
     }
 }
 
 
 function render(board) {
+    console.log('render');
     cls();
     mode = board.mode;
     cell_data = {};
@@ -240,12 +242,14 @@ function render(board) {
 	let element = board.at(i);
 	if(element.piece == 43) {
 	    route.push(element);
+	    // draw route
 	} else if(element) {
 	    let c = cell2coor(element.cell);
 	    let tag = draw_piece(
 		element.player, c.group, c.y, c.x, c.lr, element.piece
 	    );
 	    cell_data[element.cell] = {
+		type: (element.piece != -1)? 'piece': 'empty',
 		player: element.player,
 		layout_index: element.layout_index,
 		svg_tag: tag
@@ -253,14 +257,97 @@ function render(board) {
 	}
     }
     board.deleteLater();
-    //draw_route(route);
+}
+
+
+function set_clock(seconds) {
+    function two_digits_num(n) {
+	if(n < 10)
+	    return '0'+n;
+	else
+	    return ''+n;
+    }
+    var current = Hub.get_current_player();
+    var clocks = board.querySelectorAll('.clock');
+    for(let clock of clocks) {
+	clock.style.display = 'none';
+    }
+    clocks[current].style.display = '';    
+    clearInterval(timer);
+    timer = setInterval(function() {
+	if(seconds > 0)
+	    seconds--;
+	clocks[current]
+	    .querySelector('text')
+	    .textContent = two_digits_num(seconds);
+    }, 1000);
+}
+
+
+function init_clocks() {
+    var pos = {x:40,y:55};
+    const width = 15;
+    const height = 10;
+    for(let i=0; i<4; i++) {
+	let rect = create_tag(
+	    'rect',
+	    {
+		x: pos.x,
+		y: pos.y,
+		width: width,
+		height: height,
+		fill: 'none',
+		stroke: 'black',
+		'stroke-width': 1
+	    },
+	    {
+		transform: 'translate(-50%, -50%)'
+	    }
+	);
+	let text = create_tag(
+	    'text',
+	    {
+		x: pos.x,
+		y: pos.y,
+		dy: 3,
+		'text-anchor': 'middle',
+		'font-size': 10
+	    }
+	);
+	text.textContent = '00';
+	let g_tag = create_tag('g');
+	g_tag.classList.add('clock');
+	g_tag.style.display = 'none';
+	g_tag.appendChild(rect);
+	g_tag.appendChild(text);
+	
+	let t = pos.x;
+	pos.x = pos.y;
+	pos.y = -t;
+
+	clocks.appendChild(g_tag);
+    }
 }
 
 
 function init() {
     document.body.addEventListener('click', cancel_select);
+    init_clocks();
     Hub.render.connect(render);
+    Hub.set_clock.connect(set_clock);
 }
 
 
 window.addEventListener('load', init);
+
+
+if (NodeList.prototype[Symbol.iterator] === undefined) {
+    NodeList.prototype[Symbol.iterator] = function () {
+        var i = 0;
+        return {
+            next: () => {
+                return { done: i >= this.length, value: this.item(i++) };
+            }
+        };
+    };
+}

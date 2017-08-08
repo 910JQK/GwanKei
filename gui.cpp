@@ -41,7 +41,30 @@ View::View(QWidget* parent) : QWebView(parent) {
 
 
 void View::test() {
+  desk = new Desk(NoExpose, false);
+  desk->set_player(Orange, "Orange");
+  desk->set_player(Purple, "Purple");
+  desk->set_player(Green, "Green");
+  desk->set_player(Blue, "Blue");
+  desk->ready(Purple, Layout());
+  desk->ready(Green, Layout());
+  desk->ready(Blue, Layout());
   hub->init(Orange, Layout());
+  connect(hub, &Hub::submit_ready, this, [this]{
+      emit this->desk->ready(Orange, this->hub->get_layout());
+  });
+  connect(hub, &Hub::submit_move, this, [this](int from, int to){
+      emit this->desk->move(Orange, Cell(from), Cell(to));
+  });
+  connect(desk,
+      &Desk::status_changed,
+      this,
+      [this](Player target, Game game, Player current, int wait_sec){
+	   if(target == Orange) {
+	       this->hub->status_changed(game, current, wait_sec);
+	   }
+      }
+  );
 }
 
 
@@ -69,6 +92,11 @@ void Hub::init(Player player, Layout layout) {
 }
 
 
+Layout Hub::get_layout() const {
+  return this->layout;
+}
+
+
 bool Hub::is_layout_able_to_swap(int index1, int index2) const {
   return layout.is_able_to_swap(index1, index2);
 }
@@ -87,9 +115,14 @@ bool Hub::is_movable(int from, int to) const {
 }
 
 
+int Hub::get_current_player() const {
+  return current_player;
+}
+
+
 void Hub::status_changed(Game game, Player current_player, int wait_seconds) {
   if(!started) {
-    started = started;
+    started = true;
     game_started();
   }
   this->game = game;
@@ -145,9 +178,7 @@ Board::Board(Layout initial_layout, Player perspective) : QObject() {
   for(int i=0; i<25; i++) {
     elements.push_back(
 	RenderElementFromPiece(
-	    convert_layout_index_to_cell(
-		i, convert_player_to_orient(perspective)
-	    ),
+	    convert_layout_index_to_cell(i, perspective),
 	    Element::Known(perspective, i),
 	    initial_layout.get(i)
 	)

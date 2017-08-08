@@ -32,6 +32,7 @@ class View : public QWebView {
   Q_OBJECT
 private:
   Hub* hub;
+  Desk* desk;
 public:
   View(QWidget* parent);
   void test();
@@ -64,9 +65,11 @@ private:
 public:
   void execute_render();
   void init(Player player, Layout layout);
+  Layout get_layout() const;
   Q_INVOKABLE bool is_layout_able_to_swap(int index1, int index2) const;
   Q_INVOKABLE void layout_swap(int index1, int index2);
   Q_INVOKABLE bool is_movable(int from, int to) const;
+  Q_INVOKABLE int get_current_player() const;
 signals:
   /* -- Signals Emitted from Frontend -- */
   void submit_ready();

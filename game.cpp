@@ -45,15 +45,21 @@ namespace GwanKei {
     return static_cast<Player>(orient-1);
   }
 
-  Cell convert_layout_index_to_cell(int index, CellGroup group /* = South */) {
+  Cell convert_layout_index_to_cell(int index, Player player /* = Orange */) {
     assert(is_valid_layout_index(index));
     return Cell(
-	        group, Y_OF_INDEX[index], X_OF_INDEX[index], LR_OF_INDEX[index]
+	        convert_player_to_orient(player),
+		Y_OF_INDEX[index],
+		X_OF_INDEX[index],
+		LR_OF_INDEX[index]
 	   );
   }
 
   int convert_cell_to_layout_index(const Cell& cell) {
-    assert(cell.get_group() != Central);
+    // Central = -2
+    if(cell.get_group() == Central)
+      return -2;
+    // Ordinary
     int t = 18*cell.get_lr()+6*(cell.get_x()-1) + cell.get_y()-1;
     // Camp = -1
     return INDEX_OF_CELL[t];
@@ -147,15 +153,6 @@ namespace GwanKei {
     // this->id = 0;
   }
 
-  Element::Element(int id) {
-    this->id = id;
-  }
-
-  Element::Element(Player player) {
-    // unknown
-    this->id = 1+player*26;
-  }
-
   Element::Element(Player player, int layout_index) {
     assert(is_valid_layout_index(layout_index));
     this->id = 1+player*26+(layout_index+1);
@@ -175,7 +172,11 @@ namespace GwanKei {
   }
 
   bool Element::is_unknown() const {
-    return (id != 0) && ((id-1)%26 == 0);
+    return unknown;
+  }
+
+  void Element::set_unknown() {
+    unknown = true;
   }
 
   int Element::get_layout_index() const {
@@ -214,19 +215,13 @@ namespace GwanKei {
 
   void Game::init_board() {
     for(int i=0; i<4; i++) {
-      for(int j=0; j<4631; j++) {
-	if(is_valid_cell_id(j)) {
-	  if(enabled[i]) {
-	    int layout_index = convert_cell_to_layout_index(Cell(j));
-	    if(layout_index != -1)
-	      board[j] = Element(static_cast<Player>(i), layout_index);
-	    else
-	      board[j] = Element();
-	  } else {
-	    board[j] = Element();
-	  }
-	} // if j is a valid cell id
-      } // for j in 0..4630
+      Player player = static_cast<Player>(i);
+      for(int j=0; j<25; j++) {
+	if(enabled[i]) {
+	  Cell cell = convert_layout_index_to_cell(j, player);
+	  board[cell.get_id()] = Element(player, j);
+	}
+      } // for j in 0..24
     } // for i in 0..3
   }
 
@@ -265,8 +260,11 @@ namespace GwanKei {
   bool Game::is_movable(Cell from, Cell to) const {
     Element from_element = board[from.get_id()];
     Element to_element = board[from.get_id()];
-    assert(!from_element.is_empty() && !from_element.is_unknown());
-    if(from.get_type() == Headquarter) {
+    if(from_element.is_empty() || from_element.is_unknown()) {
+      return false;      
+    } else if(from.get_type() == Headquarter) {
+      return false;
+    } else if(!to_element.is_empty() && to.get_type() == Camp) {
       return false;
     } else if(piece_of(from_element) == Piece(41)) {
       return false;
@@ -331,13 +329,22 @@ namespace GwanKei {
 
   Game Game::get_game_with_mask(Player perspective, MaskMode mask_mode) const {
     Game result = *this;
+    auto set_unknown = [&result, perspective](int delta) {
+      Player player = static_cast<Player>((perspective+delta)%4);
+      result.layout[player] = Layout::Masked();
+      for(int j=0; j<25; j++) {
+	result.board[
+	  convert_layout_index_to_cell(j, player).get_id()
+	].set_unknown();
+      }
+    };
     if(mask_mode == NoExpose) {
-      result.layout[(perspective+1)%4] = Layout::Masked();
-      result.layout[(perspective+2)%4] = Layout::Masked();
-      result.layout[(perspective+3)%4] = Layout::Masked();
+      for(int i=1; i<=3; i++) {
+	set_unknown(i);
+      }
     } else if(mask_mode == DoubleExpose) {
-      result.layout[(perspective+1)%4] = Layout::Masked();
-      result.layout[(perspective+3)%4] = Layout::Masked();
+      set_unknown(1);
+      set_unknown(3);
     }
     return result;
   }

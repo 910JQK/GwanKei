@@ -22,12 +22,14 @@ private:
   Player current_player;
   QTimer timer;
   MaskMode mask_mode;
+  bool is_1_v_1;
   int step_count = 0;
 private:
   void change_status(int single_player = -1);
   void next_turn();
+  void try_to_start();
 public:
-  Desk(MaskMode mask_mode = NoExpose);
+  Desk(MaskMode mask_mode = NoExpose, bool is_1_v_1 = false);
   ~Desk();
   QStringList get_players() const;
   QList<bool> get_ready_state() const;

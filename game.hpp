@@ -111,6 +111,7 @@ namespace GwanKei {
   class Element {
   private:
     int id = 0;
+    bool unknown = false;
     /**
        |------|-------------------------------|
        |  ID  |              意義             |
@@ -135,16 +136,19 @@ namespace GwanKei {
      */
   public:
     Element();
-    Element(int id);
-    Element(Player player);
     Element(Player player, int layout_index);
     int get_id() const;
     bool is_empty() const; // 空位？
     Player get_player() const;
     bool is_unknown() const; // 未知？
+    void set_unknown();
     int get_layout_index() const;
     Element& operator = (const Element& right);
-    static Element Unknown(Player player) { return Element(player); };
+    static Element Unknown(Player player, int layout_index) {
+      Element result(player, layout_index);
+      result.set_unknown();
+      return result;
+    };
     static Element Known(Player player, int layout_index) {
       return Element(player, layout_index);
     };
@@ -197,7 +201,7 @@ namespace GwanKei {
   bool is_valid_layout_index(int index);
   Orient convert_player_to_orient(Player player);
   Player convert_orient_to_player(Orient orient);
-  Cell convert_layout_index_to_cell(int index, CellGroup group = South);
+  Cell convert_layout_index_to_cell(int index, Player player = Orange);
   int convert_cell_to_layout_index(const Cell& cell);
 
 };

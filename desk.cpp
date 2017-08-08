@@ -2,8 +2,9 @@
 #include "desk.hpp"
 
 
-Desk::Desk(MaskMode mask_mode) : QObject() {
+Desk::Desk(MaskMode mask_mode, bool is_1_v_1) : QObject() {
   this->mask_mode = mask_mode;
+  this->is_1_v_1 = is_1_v_1;
   timer.setSingleShot(true);
   timer.setInterval(WAITING_TIME*1000);
   connect(&timer, &QTimer::timeout, this, &Desk::timeout);
@@ -49,7 +50,7 @@ void Desk::change_status(int single_player /* = -1 */) {
 	player,
 	game->get_game_with_mask(player, mask_mode),
 	current_player,
-	timer.remainingTime()
+	timer.remainingTime()/1000
     );
   }
 }
@@ -59,6 +60,30 @@ void Desk::next_turn() {
   timer.stop();
   current_player = static_cast<Player>((current_player+1)%4);
   timer.start();
+}
+
+
+void Desk::try_to_start() {
+  static auto start = [this]{
+    this->started = true;
+    this->current_player = Blue;
+    this->next_turn();
+    this->change_status();
+  };
+  if(is_1_v_1) {
+    if(ready_state[0] && ready_state[2]) {
+      game = new Game(layouts[0], layouts[2]);
+      start();
+    } else if(ready_state[1] && ready_state[3]) {
+      game = new Game(layouts[1], layouts[3], true);
+      start();
+    }
+  } else {
+    if(ready_state[0] && ready_state[1] && ready_state[2] && ready_state[3]) {
+      game = new Game(layouts);
+      start();
+    }
+  }
 }
 
 
@@ -99,14 +124,13 @@ void Desk::ready(Player player, Layout layout) {
     ready_state[player] = true;
     emit ready_state_changed(get_ready_state());
   }
-  /*
-    [ start game ]
-  */
+  try_to_start();
 }
 
 
 void Desk::move(Player player, Cell from, Cell to) {
-  if(started && player == current_player && game->is_movable(from, to)) {
+  if(started && player == current_player && game->is_movable(from, to)
+     && game->element_of(from).get_player() == player) {
     game->move(from, to);
     next_turn();
     change_status();
