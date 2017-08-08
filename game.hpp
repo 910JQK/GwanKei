@@ -117,19 +117,19 @@ namespace GwanKei {
        |  ID  |              意義             |
        |------|-------------------------------|
        |  00  |              空位             |
-       |  01  |  #0 玩家 (Orange) 的未知棋子  |
+       |  01  |  #0 玩家 (Orange) 【保留】    |
        |  02  |  #0 layout index = 0 的棋子   |
        |  03  |  #0 layout index = 1 的棋子   |
        |  04  |  #0 layout index = 2 的棋子   |
        |  ..  |  #0 layout index = .......    |
-       |  27  |  #1 玩家 (Purple) 的未知棋子  |
+       |  27  |  #1 玩家 (Purple) 【保留】    |
        |  28  |  #1 player, layout index = 0  |
        |  29  |  #1 player, layout index = 1  |
        |  30  |  #1 player, layout index = 2  |
        |  ..  |  #1 layout index = .......    |
-       |  53  |  #2 玩家 (Green) 的未知棋子   |
+       |  53  |  #2 玩家 (Green)  【保留】    |
        |  ..  |  #2 layout index = .......    |
-       |  79  |  #3 玩家 (Blue)  的未知棋子   |
+       |  79  |  #3 玩家 (Blue)   【保留】    |
        |  ..  |  #3 layout index = .......    |
        |  104 |  #3 player, layout index = 24 |
        |------|-------------------------------|
