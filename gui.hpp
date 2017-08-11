@@ -7,6 +7,7 @@
 #include <QString>
 #include <QVariantMap>
 #include "desk.hpp"
+#include "ai.hpp"
 
 using namespace GwanKei;
 
@@ -33,6 +34,7 @@ class View : public QWebView {
   Q_OBJECT
 private:
   Desk* desk;
+  Brainless** ai;
 public:
   View(QWidget* parent);
   Hub* hub;

@@ -7,6 +7,7 @@
 #include <QAction>
 #include <QDir>
 #include <QUrl>
+#include <QTimer>
 #include "gui.hpp"
 
 
@@ -54,20 +55,39 @@ void View::test() {
   desk->ready(Blue, Layout());
   hub->init(Orange, Layout());
   connect(hub, &Hub::submit_ready, this, [this]{
-      emit this->desk->ready(Orange, this->hub->get_layout());
+    emit this->desk->ready(Orange, this->hub->get_layout());
   });
   connect(hub, &Hub::submit_move, this, [this](int from, int to){
-      emit this->desk->move(Orange, Cell(from), Cell(to));
+    emit this->desk->move(Orange, Cell(from), Cell(to));
   });
-  connect(desk,
-      &Desk::status_changed,
-      this,
-      [this](Player target, Game game, Player current, int wait_sec){
-	   if(target == Orange) {
-	       this->hub->status_changed(game, current, wait_sec);
-	   }
+  ai = new Brainless*[3];
+  for(int i=0; i<3; i++) {
+    ai[i] = new Brainless(static_cast<Player>(i+1));
+  }
+  connect(
+    desk,
+    &Desk::status_changed,
+    this,
+    [this](Player target, Game game, Player current, int wait_sec) {
+      if(target == Orange) {
+	this->hub->status_changed(game, current, wait_sec);
+      } else {
+	this->ai[target-1]->status_changed(game, current);
       }
+    }
   );
+  for(int i=0; i<3; i++) {
+    connect(
+      ai[i],
+      &Brainless::move,
+      this,
+      [this, i](Cell from, Cell to) {
+	QTimer::singleShot(2500, this, [this, i, from, to]() { 
+	  this->desk->move(static_cast<Player>(i+1), from, to);
+	});
+      }
+    );
+  }
 }
 
 

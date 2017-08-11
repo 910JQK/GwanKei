@@ -9,7 +9,7 @@
 
 using namespace GwanKei;
 
-const unsigned int WAITING_TIME = 5;
+const unsigned int WAITING_TIME = 30;
 
 class Desk : public QObject {
   Q_OBJECT
