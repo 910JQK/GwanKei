@@ -11,6 +11,19 @@ using namespace GwanKei;
 
 const unsigned int WAITING_TIME = 30;
 
+enum Ending {
+  OrangeGreenWin,
+  PurpleBlueWin,
+  Tie
+};
+
+enum FailReason {
+  FlagLost,
+  NoLivePiece,
+  Surrender,
+  Timeout
+};
+
 class Desk : public QObject {
   Q_OBJECT
 private:
@@ -18,6 +31,7 @@ private:
   bool started = false;
   Layout layouts[4];
   bool ready_state[4] = {0};
+  bool failed[4] = {0};
   QString players[4] = {"", "","",""};
   Player current_player;
   QTimer timer;
@@ -28,6 +42,7 @@ private:
   void change_status(int single_player = -1);
   void next_turn();
   void try_to_start();
+  bool check_ending();
 public:
   Desk(MaskMode mask_mode = NoExpose, bool is_1_v_1 = false);
   ~Desk();
@@ -43,8 +58,10 @@ signals:
       Player current_player,
       int wait_seconds
   );
+  void fail(Player player, FailReason reason);
+  void end(Ending ending);
 public slots:
-  void timeout();
+  void timeout(); // timer 
   void set_player(Player player, QString name);
   void remove_player(QString name);
   void request_status_message(Player player);

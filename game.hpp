@@ -164,6 +164,7 @@ namespace GwanKei {
     Feedback();
     Feedback(MoveResult move_result, const std::list<Cell>& route);
     bool is_nothing() const;
+    MoveResult get_move_result() const;
     std::list<Cell> get_route() const;
     Feedback& operator = (const Feedback& right);
   };
@@ -192,6 +193,7 @@ namespace GwanKei {
     bool is_movable(Cell from, Cell to) const;
     Feedback move(Cell from, Cell to, MoveResult force_result = Nothing);
     Feedback get_last_feedback() const;
+    void annihilate(Player player);
     Game get_game_with_mask(
         Player perspective, MaskMode mask_mode = NoExpose
     ) const;

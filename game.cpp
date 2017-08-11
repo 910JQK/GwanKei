@@ -207,6 +207,10 @@ namespace GwanKei {
     return (move_result == Nothing);
   }
 
+  MoveResult Feedback::get_move_result() const {
+    return move_result;
+  }
+
   std::list<Cell> Feedback::get_route() const {
     return route;
   }
@@ -261,7 +265,7 @@ namespace GwanKei {
     Player player = element.get_player();
     /**
      * Something Ugly:
-     * 布局不明的玩家的已知棋子 -> 無司令以致亮出的軍旗
+     * 布局不明的玩家的已知棋子 ->  無司令以致亮出的軍旗
      * 對於非一般玩法，該邏輯需要調整
      */
     assert(!(layout[player].is_masked() && !show_flag[player]));
@@ -281,6 +285,11 @@ namespace GwanKei {
     } else if(!to_element.is_empty() && to.get_type() == Camp) {
       return false;
     } else if(piece_of(from_element) == Piece(41)) {
+      return false;
+    } else if(
+	 !to_element.is_empty()
+	 && (to_element.get_player() == from_element.get_player())
+      ) {
       return false;
     } else {
       bool occupy_state[4631] = {0};
@@ -347,6 +356,17 @@ namespace GwanKei {
 
   Feedback Game::get_last_feedback() const {
     return last_feedback;
+  }
+
+  void Game::annihilate(Player player) {
+    for(int i=0; i<4631; i++) {
+      if(is_valid_cell_id(i)) {
+	if(!board[i].is_empty() && board[i].get_player() == player) {
+	  // set empty
+	  board[i] = Element();
+	}
+      } // is valid cell id
+    } // for cell id
   }
 
   Game Game::get_game_with_mask(Player perspective, MaskMode mask_mode) const {

@@ -58,7 +58,12 @@ void Desk::change_status(int single_player /* = -1 */) {
 
 void Desk::next_turn() {
   timer.stop();
-  current_player = static_cast<Player>((current_player+1)%4);
+  do {
+    // if not failed, check_live_piece, no -> failed[..] = true
+    if(check_ending())
+      return;
+    current_player = static_cast<Player>((current_player+1)%4);
+  } while(failed[current_player]);
   timer.start();
 }
 
@@ -84,6 +89,20 @@ void Desk::try_to_start() {
       start();
     }
   }
+}
+
+
+bool Desk::check_ending() {
+  if(failed[0] && failed[2]) {
+    emit end(PurpleBlueWin);
+    return true;
+  } else if(failed[1] && failed[3]) {
+    emit end(OrangeGreenWin);
+    return true;
+  } else {
+    // tie, to be implemented
+  }
+  return false;
 }
 
 
@@ -131,7 +150,18 @@ void Desk::ready(Player player, Layout layout) {
 void Desk::move(Player player, Cell from, Cell to) {
   if(started && player == current_player && game->is_movable(from, to)
      && game->element_of(from).get_player() == player) {
-    game->move(from, to);
+    Element to_element = game->element_of(to);
+    bool is_to_flag = false;
+    if(!to_element.is_empty() && game->piece_of(to_element).get_id() == 31) {
+      is_to_flag = true;
+    }    
+    Feedback feedback = game->move(from, to);
+    if(feedback.get_move_result() == Bigger && is_to_flag) {
+      Player to_player = to_element.get_player();
+      game->annihilate(to_player);
+      failed[to_player] = true;
+      emit fail(to_player, FlagLost);
+    }
     next_turn();
     change_status();
   }

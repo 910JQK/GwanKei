@@ -2,6 +2,7 @@
 #include <QDesktopWidget>
 #include <QWebSettings>
 #include <QWebFrame>
+#include <QMessageBox>
 #include <QMenuBar>
 #include <QMenu>
 #include <QAction>
@@ -88,6 +89,20 @@ void View::test() {
       }
     );
   }
+  connect(desk, &Desk::fail, this, [this](Player player, FailReason reason) {
+    QMessageBox::information(
+      this,
+      tr("Message"),
+      tr("%1 failed (%2)").arg(int(player)).arg(int(reason))
+    );
+  });
+  connect(desk, &Desk::end, this, [this](Ending ending) {
+    QMessageBox::information(
+      this,
+      tr("Message"),
+      tr("Game Over (%1)").arg(int(ending))
+    );
+  });
 }
 
 
