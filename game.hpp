@@ -142,6 +142,7 @@ namespace GwanKei {
     Player get_player() const;
     bool is_unknown() const; // 未知？
     void set_unknown();
+    void set_known();
     int get_layout_index() const;
     Element& operator = (const Element& right);
     static Element Unknown(Player player, int layout_index) {
@@ -179,6 +180,7 @@ namespace GwanKei {
     Element board[4631];
     Layout layout[4];
     bool enabled[4] = {0};
+    bool show_flag[4] = {0};
     Feedback last_feedback;
     void init_board();
   public:

@@ -179,6 +179,10 @@ namespace GwanKei {
     unknown = true;
   }
 
+  void Element::set_known() {
+    unknown = false;
+  }
+
   int Element::get_layout_index() const {
     assert(!is_empty());
     return ((id-1)%26 - 1);
@@ -254,7 +258,17 @@ namespace GwanKei {
 
   Piece Game::piece_of(Element element) const {
     assert(!element.is_empty() && !element.is_unknown());
-    return layout[element.get_player()].get(element.get_layout_index());
+    Player player = element.get_player();
+    /**
+     * Something Ugly:
+     * 布局不明的玩家的已知棋子 -> 無司令以致亮出的軍旗
+     * 對於非一般玩法，該邏輯需要調整
+     */
+    assert(!(layout[player].is_masked() && !show_flag[player]));
+    if(layout[player].is_masked() && show_flag[player])
+      return Piece(31);
+    else
+      return layout[player].get(element.get_layout_index());
   }
 
   bool Game::is_movable(Cell from, Cell to) const {
@@ -337,14 +351,29 @@ namespace GwanKei {
 
   Game Game::get_game_with_mask(Player perspective, MaskMode mask_mode) const {
     Game result = *this;
-    auto set_unknown = [&result, perspective](int delta) {
+    auto set_unknown = [&result, perspective, this](int delta) {
       Player player = static_cast<Player>((perspective+delta)%4);
       result.layout[player] = Layout::Masked();
+      bool has40 = false;
+      int pos31 = -1;
       for(int j=0; j<4631; j++) {
-	if(is_valid_cell_id(j))
-	  if(!result.board[j].is_empty()
-	     && result.board[j].get_player() == player)
-	    result.board[j].set_unknown();
+	if(is_valid_cell_id(j)) {
+	  if(!board[j].is_empty()
+	     && board[j].get_player() == player) {
+	    if(piece_of(board[j]).get_id() == 40) {
+	      has40 = true;
+	    }
+	    if(piece_of(board[j]).get_id() == 31) {
+	      pos31 = j;
+	    }
+	    result.board[j].set_unknown();	    
+	  } // not empty and is this player
+	} // valid cell id
+      } // for cell id
+      if(!has40) {
+	result.show_flag[player] = true;
+	if(pos31 != -1)
+	  result.board[pos31].set_known();
       }
     };
     if(mask_mode == NoExpose) {
@@ -362,6 +391,7 @@ namespace GwanKei {
     memcpy(board, right.board, 4631*sizeof(Element));
     memcpy(layout, right.layout, 4*sizeof(Layout));
     memcpy(enabled, right.enabled, 4*sizeof(bool));
+    memcpy(show_flag, right.show_flag, 4*sizeof(bool));
     last_feedback = right.last_feedback;
     return *this;
   }
