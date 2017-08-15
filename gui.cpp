@@ -51,9 +51,6 @@ void View::test() {
   desk->set_player(Purple, "Purple");
   desk->set_player(Green, "Green");
   desk->set_player(Blue, "Blue");
-  desk->ready(Purple, Layout());
-  desk->ready(Green, Layout());
-  desk->ready(Blue, Layout());
   hub->init(Orange, Layout());
   connect(hub, &Hub::submit_ready, this, [this]{
     emit this->desk->ready(Orange, this->hub->get_layout());
@@ -64,6 +61,7 @@ void View::test() {
   ai = new Brainless*[3];
   for(int i=0; i<3; i++) {
     ai[i] = new Brainless(static_cast<Player>(i+1));
+    desk->ready(static_cast<Player>(i+1), ai[i]->get_layout());
   }
   connect(
     desk,

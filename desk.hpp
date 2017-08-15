@@ -18,10 +18,10 @@ enum Ending {
 };
 
 enum FailReason {
-  FlagLost,
-  NoLivingPiece,
-  Surrender,
-  Timeout
+  FlagLost,          // 軍棋被扛
+  NoLivingPiece,     // 無棋可走
+  Surrender,         // 投降
+  Timeout            // 超時
 };
 
 class Desk : public QObject {
@@ -65,7 +65,7 @@ public slots:
   void set_player(Player player, QString name);
   void remove_player(QString name);
   void request_status_message(Player player);
-  void ready(Player player, Layout layout);
+  void ready(Player player, Layout layout); // ready 人數夠多則自動開局
   void move(Player player, Cell from, Cell to);
   void skip(Player player);
 };

@@ -311,6 +311,22 @@ function cancel_select() {
 
 
 function render(board) {
+    /**
+       RenderElement(QVariantMap) board::at(int index)
+       
+       RenderElement {
+           "cell": integer, cell id
+	   "piece": integer, piece id
+               -1 -> empty (special)
+               42 -> unknown (ordinary)
+               43 -> route (special)
+               others -> known piece (ordinary)
+	   "player": integer, player id (0..3)
+               -1 -> not an ordinary piece, no player
+	   "layout_index": integer, layout index (0..24)
+               -1 -> not an ordinary piece, no layout index
+       }
+     */
     console.log('render');
     cls();
     mode = board.mode;
@@ -420,6 +436,7 @@ function init() {
 window.addEventListener('load', init);
 
 
+// polyfill
 if (NodeList.prototype[Symbol.iterator] === undefined) {
     NodeList.prototype[Symbol.iterator] = function () {
         var i = 0;

@@ -322,24 +322,6 @@ namespace GwanKei {
     }
   }
 
-  bool Game::is_reachable(Cell to, Player player) const {
-    bool result = false;
-    assert(enabled[player]);
-    for(int i=0; i<4631; i++) {
-      if(is_valid_cell_id(i)) {
-	if(!board[i].is_empty()
-	   && !board[i].is_unknown()
-	   && board[i].get_player() == player) {
-	  if(is_movable(Cell(i), to)) {
-	    result = true;
-	    break;
-	  } // movable
-	} // this player
-      } // valid cell id
-    } // for cell id
-    return result;
-  }
-
   bool Game::has_living_piece(Player player) const {
     assert(enabled[player]);
     for(int i=0; i<4631; i++) {

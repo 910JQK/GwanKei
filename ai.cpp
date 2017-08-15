@@ -14,6 +14,19 @@ Brainless::Brainless(Player player) : AI(player) {
 }
 
 
+Layout Brainless::get_layout() {
+  Layout result;
+  for(int i=0; i<200; i++) {
+    int index1 = qrand() % 25;
+    int index2 = qrand() % 25;
+    if(result.is_able_to_swap(index1, index2)) {
+      result.swap(index1, index2);
+    }
+  }
+  return result;
+}
+
+
 void Brainless::status_changed(Game game, Player current_player) {
   if(current_player == player) {
     std::list<Cell> my_cells;

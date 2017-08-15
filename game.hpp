@@ -95,7 +95,7 @@ namespace GwanKei {
     Piece get(int index) const;
     Piece get(int y, int x, LeftRight lr) const;
     bool is_able_to_swap(int index1, int index2) const;
-    void swap(int index1, int index2);
+    void swap(int index1, int index2); // 交換位置
     std::string to_string() const;
     Layout& operator = (const Layout& right);
     static Layout Masked() { return Layout(true); };
@@ -106,7 +106,7 @@ namespace GwanKei {
     Orange, Purple, Green, Blue
   };
 
-  /* 棋盤格子中填充的元素 */
+  /* 棋盤格子中填充的元素（棋子、空位） */
   /* 對於一般棋子，映射到 Layout 上，不直接記錄信息 */
   class Element {
   private:
@@ -175,32 +175,43 @@ namespace GwanKei {
     /* 四暗，雙明，全明 */
   };
 
-  /* 遊戲操作 Object, 不含回合信息 */
+  /* 棋盤操作 Object, 保存每個格子的狀態，可以進行碰子等操作，不含回合信息 */
   class Game {
   private:
-    Element board[4631];
-    Layout layout[4];
-    bool enabled[4] = {0};
-    bool show_flag[4] = {0};
-    Feedback last_feedback;
+    Element board[4631]; // 格子狀態，以 Cell ID 為下標
+    Layout layout[4]; // 佈局，以 player 為下標
+    bool enabled[4] = {0}; // 哪些玩家參與了游戲
+    bool show_flag[4] = {0}; // 亮棋？
+    Feedback last_feedback; // 最近一次玩家操作結果
     void init_board();
   public:
     Game() {};
+    /* 單挑局, 默認南北方向，若設 EW = true 則在東西方向 */
     Game(const Layout& layout_S, const Layout& layout_N, bool EW = false);
+    /* 2v2, 輸入數組 layouts[0,1,2,3] */
     Game(const Layout* layouts);
+    /* return board[cell.get_id()]; */
     Element element_of(Cell cell) const;
+    /* 查詢棋子（大小），要求該 element 非空且已知 */
     Piece piece_of(Element element) const;
+    /** 判斷是否可以從 from 移動到 to.
+	若不假定棋子的身份，則要求 element_of(from) 非空已知 */
     bool is_movable(
       Cell from, Cell to, bool assume = false, Piece piece = Piece(0)
     ) const;
-    bool is_reachable(Cell to, Player player) const;
+    /* 判斷 player 是否有活棋，用於無棋可走的判負條件 */
     bool has_living_piece(Player player) const;
+    /* 移動棋子，可指定 force_result 為非 Nothing 的值以作假定 */
     Feedback move(Cell from, Cell to, MoveResult force_result = Nothing);
+    /* return last_feedback; */
     Feedback get_last_feedback() const;
+    /* 銷毁 player 的所有棋子 */
     void annihilate(Player player);
+    /* 按照游戲模式（亮子模式）取得隐去未知信息的 Game Object */
     Game get_game_with_mask(
         Player perspective, MaskMode mask_mode = NoExpose
     ) const;
+    /* 複製 */
     Game& operator = (const Game& right);
   };
 

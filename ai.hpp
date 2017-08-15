@@ -14,6 +14,7 @@ class AI : public QObject {
 public:
   Player player;
   AI(Player player);
+  virtual Layout get_layout() = 0;
 signals:
   void move(Cell from, Cell to);
 public slots:
@@ -25,6 +26,7 @@ class Brainless : public AI {
   Q_OBJECT
 public:
   Brainless(Player player);
+  Layout get_layout();
 public slots:
   void status_changed(Game game, Player current_player);
 };
