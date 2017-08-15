@@ -264,6 +264,13 @@ function draw_route(route_arr) {
 	text.textContent = '\u2192';
 	route_signs.appendChild(text);
     }
+    if(route_arr.length > 1) {
+	let target_cell = route_arr[route_arr.length-1].cell;
+	if(cell_data[target_cell].type == 'empty') {
+	    let rect = cell_data[target_cell].svg_tag.querySelector('rect');
+	    rect.style.stroke = 'red';
+	}
+    }
 }
 
 
@@ -271,6 +278,26 @@ function select_cell(cell) {
     cancel_select();
     cell_data[cell].svg_tag.classList.add('selected');
     selected_cell = cell;
+    update_cursor();
+}
+
+
+function update_cursor() {
+    if(mode == 'playing') {
+	if(selected_cell != -1) {
+	    for(let I of Object.keys(cell_data)) {
+		if(Hub.is_movable(selected_cell, I)) {
+		    cell_data[I].svg_tag.style.cursor = 'pointer';
+		} // is movable
+	    } // for cell
+	} else {
+	    for(let I of Object.keys(cell_data)) {
+		if(cell_data[I].player != perspective) {
+		    cell_data[I].svg_tag.style.cursor = 'default';
+		}
+	    }
+	} // selected ?
+    } // playing
 }
 
 
@@ -279,6 +306,7 @@ function cancel_select() {
 	cell_data[selected_cell].svg_tag.classList.remove('selected');
 	selected_cell = -1;
     }
+    update_cursor();
 }
 
 

@@ -291,6 +291,15 @@ namespace GwanKei {
 	 && (to_element.get_player() == from_element.get_player())
       ) {
       return false;
+    } else if(
+	      !to_element.is_empty()
+	      && (
+	          int(to_element.get_player())
+		  == (from_element.get_player()+2)%4
+		  )
+	      && enabled[0] && enabled[1] && enabled[2] && enabled[3]
+      ) {
+      return false;
     } else {
       bool occupy_state[4631] = {0};
       for(int i=0; i<4631; i++) {
@@ -306,6 +315,23 @@ namespace GwanKei {
       else
 	return true;
     }
+  }
+
+  bool Game::is_reachable(Cell to, Player player) const {
+    bool result = false;
+    for(int i=0; i<4631; i++) {
+      if(is_valid_cell_id(i)) {
+	if(!board[i].is_empty()
+	   && !board[i].is_unknown()
+	   && board[i].get_player() == player) {
+	  if(is_movable(Cell(i), to)) {
+	    result = true;
+	    break;
+	  } // movable
+	} // this player
+      } // valid cell id
+    } // for cell id
+    return result;
   }
 
   Feedback Game::move(Cell from, Cell to, MoveResult force_result) {

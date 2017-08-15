@@ -191,6 +191,7 @@ namespace GwanKei {
     Element element_of(Cell cell) const;
     Piece piece_of(Element element) const;
     bool is_movable(Cell from, Cell to) const;
+    bool is_reachable(Cell to, Player player) const;
     Feedback move(Cell from, Cell to, MoveResult force_result = Nothing);
     Feedback get_last_feedback() const;
     void annihilate(Player player);

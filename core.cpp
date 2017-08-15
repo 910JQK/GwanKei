@@ -419,6 +419,10 @@ namespace GwanKei {
 	  */
 	  result.push_back(Bound(Cell(group, 6, 1, lr)) );
 	}
+	if(y == 6) {
+	  /* Road from 61 to 51 */
+	  result.push_back(Bound(Cell(group, 5, 1, lr)) );
+	}
 	/* Oblique */
 	if(y == 1 || y == 3) {
 	  /* Road to 22 */
