@@ -181,7 +181,7 @@ namespace GwanKei {
     Element board[4631]; // 格子狀態，以 Cell ID 為下標
     Layout layout[4]; // 佈局，以 player 為下標
     bool enabled[4] = {0}; // 哪些玩家參與了游戲
-    bool show_flag[4] = {0}; // 亮棋？
+    bool show_flag[4] = {0}; // 亮旗？
     Feedback last_feedback; // 最近一次玩家操作結果
     void init_board();
   public:
