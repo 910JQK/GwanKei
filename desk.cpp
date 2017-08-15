@@ -59,11 +59,17 @@ void Desk::change_status(int single_player /* = -1 */) {
 void Desk::next_turn() {
   timer.stop();
   do {
-    // if not failed, check_live_piece, no -> failed[..] = true
     if(check_ending())
       return;
     current_player = static_cast<Player>((current_player+1)%4);
   } while(failed[current_player]);
+  if(!game->has_living_piece(current_player)) {
+    game->annihilate(current_player);
+    failed[current_player] = true;
+    emit fail(current_player, NoLivingPiece);
+    next_turn();
+    return;
+  }
   timer.start();
 }
 

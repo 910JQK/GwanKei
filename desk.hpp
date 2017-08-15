@@ -19,7 +19,7 @@ enum Ending {
 
 enum FailReason {
   FlagLost,
-  NoLivePiece,
+  NoLivingPiece,
   Surrender,
   Timeout
 };

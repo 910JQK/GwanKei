@@ -275,16 +275,21 @@ namespace GwanKei {
       return layout[player].get(element.get_layout_index());
   }
 
-  bool Game::is_movable(Cell from, Cell to) const {
+  bool Game::is_movable(Cell from, Cell to, bool assume, Piece piece) const {
     Element from_element = board[from.get_id()];
     Element to_element = board[to.get_id()];
+    assert(!from_element.is_empty());
+    if(!assume) {
+      assert(!from_element.is_unknown());
+      piece = piece_of(from_element);
+    }
     if(from_element.is_empty() || from_element.is_unknown()) {
       return false;      
     } else if(from.get_type() == Headquarter) {
       return false;
     } else if(!to_element.is_empty() && to.get_type() == Camp) {
       return false;
-    } else if(piece_of(from_element) == Piece(41)) {
+    } else if(piece == Piece(41)) {
       return false;
     } else if(
 	 !to_element.is_empty()
@@ -308,7 +313,7 @@ namespace GwanKei {
 	} // if i is a valid cell id
       } // for i in 0..4630
       std::list<Cell> route = get_route(
-          from, to, occupy_state, piece_of(from_element) == Piece(32)
+          from, to, occupy_state, piece == Piece(32)
       );
       if(route.empty())
 	return false;
@@ -319,6 +324,7 @@ namespace GwanKei {
 
   bool Game::is_reachable(Cell to, Player player) const {
     bool result = false;
+    assert(enabled[player]);
     for(int i=0; i<4631; i++) {
       if(is_valid_cell_id(i)) {
 	if(!board[i].is_empty()
@@ -332,6 +338,27 @@ namespace GwanKei {
       } // valid cell id
     } // for cell id
     return result;
+  }
+
+  bool Game::has_living_piece(Player player) const {
+    assert(enabled[player]);
+    for(int i=0; i<4631; i++) {
+      if(is_valid_cell_id(i)) {
+	if(!board[i].is_empty()) {
+	  assert(!board[i].is_unknown());
+	  if(board[i].get_player() == player) {	    
+	    Cell cell(i);
+	    std::list<Bound> bounds = cell.get_adjacents();
+	    for(auto I=bounds.begin(); I!=bounds.end(); I++) {
+	      if(is_movable(cell, I->get_target()) ) {
+		return true;
+	      } // movable
+	    } // for adjacents
+	  } // this player
+	} // not empty
+      } // valid cell id
+    } // for cell id
+    return false;
   }
 
   Feedback Game::move(Cell from, Cell to, MoveResult force_result) {

@@ -215,7 +215,7 @@ namespace GwanKei {
     else {
       if(y == 6 && x == 2)
 	return Headquarter;
-      else if((y == 2 || y == 4) && x == 2)
+      else if( ((y == 2 || y == 4) && x == 2) || (x == 3 && y == 3) )
 	return Camp;
       else
 	return Station;

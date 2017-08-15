@@ -80,7 +80,7 @@ namespace GwanKei {
   /* 格子 */
   class Cell {
   private:
-    int id; // 四位十進制數格子 ID, 詳見實現（實作）
+    int id; // 四位十進制數格子 ID, 詳見 implement
   public:
     Cell();
     Cell(int id);
@@ -159,7 +159,7 @@ namespace GwanKei {
   /* 棋子 */
   class Piece {
   private:
-    int id; // 兩位 ID, 40, 39, 38 ... 詳見實現（實作）
+    int id; // 兩位 ID, 40, 39, 38 ... 詳見 implement
   public:
     Piece();
     Piece(int id);
