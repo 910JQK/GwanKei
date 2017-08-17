@@ -60,6 +60,7 @@ class Hub : public QObject {
   Q_OBJECT
 private:
   bool started = false;
+  bool ended = false;
   Game game;
   Layout layout;
   Player player;
@@ -82,8 +83,8 @@ signals:
   /* -- Signals for Rendering -- */
   void render(Board* board);
   void set_clock(int wait_seconds);
-  void game_started();
 public slots:
+  void game_over();
   void status_changed(Game game, Player current_player, int wait_seconds);
 };
 

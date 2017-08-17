@@ -105,6 +105,7 @@ void View::init_battle() {
       tr("Message"),
       tr("Game Over (%1)").arg(ending_str)
     );
+    hub->game_over();
   });
 }
 
@@ -119,7 +120,7 @@ void Hub::execute_render() {
     Board* board = new Board(layout, player);
     render(board);
   } else {
-    Board* board = new Board(game, player, player != current_player);
+    Board* board = new Board(game, player, (player != current_player) || ended);
     render(board);
   }
   // release memory in frontend
@@ -128,6 +129,7 @@ void Hub::execute_render() {
 
 void Hub::init(Player player, Layout layout) {
   this->started = false;
+  this->ended = false;
   this->player = player;
   this->layout = layout;
   execute_render();
@@ -172,10 +174,14 @@ void Hub::submit_move(int from, int to) {
 }
 
 
+void Hub::game_over() {
+  ended = true;
+}
+
+
 void Hub::status_changed(Game game, Player current_player, int wait_seconds) {
   if(!started) {
     started = true;
-    game_started();
   }
   this->game = game;
   this->current_player = current_player;

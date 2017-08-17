@@ -16,12 +16,15 @@ Brainless::Brainless(Player player) : AI(player) {
 
 Layout Brainless::get_layout() {
   Layout result;
-  for(int i=0; i<200; i++) {
+  for(int i=0; i<500; i++) {
     int index1 = qrand() % 25;
     int index2 = qrand() % 25;
     if(result.is_able_to_swap(index1, index2)) {
       result.swap(index1, index2);
     }
+  }
+  if(qrand() % 2 == 0) {
+    result.swap(14, 24); // position of flag
   }
   return result;
 }

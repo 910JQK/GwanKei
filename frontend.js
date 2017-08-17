@@ -376,6 +376,9 @@ function set_clock(seconds) {
     var clocks = board.querySelectorAll('.clock');
     cls_clocks();
     clocks[clock_index].style.display = '';
+    clocks[clock_index]
+	.querySelector('text')
+	.textContent = two_digits_num(seconds);
     clearInterval(timer);
     timer = setInterval(function() {
 	if(seconds > 0)
