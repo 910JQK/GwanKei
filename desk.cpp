@@ -18,6 +18,11 @@ Desk::~Desk() {
 }
 
 
+QString Desk::get_player_name(Player player) const {
+  return players[player];
+}
+
+
 QStringList Desk::get_players() const {
   QStringList result;
   for(int i=0; i<4; i++)
@@ -75,6 +80,8 @@ void Desk::next_turn() {
 
 
 void Desk::try_to_start() {
+  if(started)
+    return;
   static auto start = [this]{
     this->started = true;
     this->current_player = Blue;

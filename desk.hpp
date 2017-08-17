@@ -46,6 +46,7 @@ private:
 public:
   Desk(MaskMode mask_mode = NoExpose, bool is_1_v_1 = false);
   ~Desk();
+  QString get_player_name(Player player) const;
   QStringList get_players() const;
   QList<bool> get_ready_state() const;
   bool is_player_available(Player player) const;

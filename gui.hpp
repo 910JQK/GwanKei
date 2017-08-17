@@ -6,8 +6,7 @@
 #include <QList>
 #include <QString>
 #include <QVariantMap>
-#include "desk.hpp"
-#include "ai.hpp"
+#include "battle.hpp"
 
 using namespace GwanKei;
 
@@ -24,7 +23,6 @@ class Window : public QMainWindow {
 private:
   QMenu* debug_menu;
   QAction* test_action;
-  QAction* ready_action;
 public:
   Window(QApplication* app, QWidget* parent = nullptr);
   View* view;
@@ -33,11 +31,12 @@ public:
 class View : public QWebView {
   Q_OBJECT
 private:
-  Desk* desk;
-  Brainless** ai;
+  Hub* hub;
+  Battle* battle;
+  bool battle_created = false;
+  void init_battle();
 public:
   View(QWidget* parent);
-  Hub* hub;
   void test();
 public slots:
   void javaScriptWindowObjectCleared();
@@ -73,11 +72,13 @@ public:
   Q_INVOKABLE void layout_swap(int index1, int index2);
   Q_INVOKABLE bool is_movable(int from, int to) const;
   Q_INVOKABLE int get_current_player() const;
+  Q_INVOKABLE void submit_ready();
+  Q_INVOKABLE void submit_move(int from, int to);
+  // Q_INVOKABLE void submit_update_request();
 signals:
   /* -- Signals Emitted from Frontend -- */
-  void submit_ready();
-  void submit_move(int from, int to);
-  void submit_update_request();
+  void ready(Layout layout);
+  void move(Cell from, Cell to);
   /* -- Signals for Rendering -- */
   void render(Board* board);
   void set_clock(int wait_seconds);

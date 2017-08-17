@@ -23,12 +23,9 @@ Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
    (desktop->height() - this->height())/2
   );
   test_action = new QAction(tr("&Test"), this);
-  ready_action = new QAction(tr("&Ready"), this);
   connect(test_action, &QAction::triggered, view, &View::test);
-  connect(ready_action, &QAction::triggered, view->hub, &Hub::submit_ready);
   debug_menu = menuBar()->addMenu(tr("&Debug"));
   debug_menu->addAction(test_action);
-  debug_menu->addAction(ready_action);
 }
 
 
@@ -46,59 +43,67 @@ View::View(QWidget* parent) : QWebView(parent) {
 
 
 void View::test() {
-  desk = new Desk(NoExpose, false);
-  desk->set_player(Orange, "Orange");
-  desk->set_player(Purple, "Purple");
-  desk->set_player(Green, "Green");
-  desk->set_player(Blue, "Blue");
-  hub->init(Orange, Layout());
-  connect(hub, &Hub::submit_ready, this, [this]{
-    emit this->desk->ready(Orange, this->hub->get_layout());
-  });
-  connect(hub, &Hub::submit_move, this, [this](int from, int to){
-    emit this->desk->move(Orange, Cell(from), Cell(to));
-  });
-  ai = new Brainless*[3];
-  for(int i=0; i<3; i++) {
-    ai[i] = new Brainless(static_cast<Player>(i+1));
-    desk->ready(static_cast<Player>(i+1), ai[i]->get_layout());
+  if(battle_created) {
+    delete battle;
   }
-  connect(
-    desk,
-    &Desk::status_changed,
-    this,
-    [this](Player target, Game game, Player current, int wait_sec) {
-      if(target == Orange) {
-	this->hub->status_changed(game, current, wait_sec);
-      } else {
-	this->ai[target-1]->status_changed(game, current);
-      }
+  battle = Battle::Create(BL_AI_2v2_NE);
+  battle_created = true;
+  init_battle();
+}
+
+
+void View::init_battle() {
+  hub->init(battle->get_player(), Layout());
+  connect(hub, &Hub::ready, battle, &Battle::ready);
+  connect(hub, &Hub::move, battle, &Battle::move);
+  connect(battle, &Battle::status_changed, hub, &Hub::status_changed);
+  connect(battle, &Battle::fail, this, [this](Player who, FailReason reason) {
+    QString reason_str;
+    switch(reason) {
+    case FlagLost:
+      reason_str = tr("flag was snatched");
+      break;
+    case NoLivingPiece:
+      reason_str = tr("has no living piece");
+      break;
+    case Surrender:
+      reason_str = tr("surrendered");
+      break;
+    case Timeout:
+      reason_str = tr("timeout count exceeded limit");
+      break;
     }
-  );
-  for(int i=0; i<3; i++) {
-    connect(
-      ai[i],
-      &Brainless::move,
-      this,
-      [this, i](Cell from, Cell to) {
-	QTimer::singleShot(2500, this, [this, i, from, to]() { 
-	  this->desk->move(static_cast<Player>(i+1), from, to);
-	});
-      }
-    );
-  }
-  connect(desk, &Desk::fail, this, [this](Player player, FailReason reason) {
     QMessageBox::information(
       this,
       tr("Message"),
-      tr("%1 failed (%2)").arg(int(player)).arg(int(reason))
+      tr("%1 failed (%2)")
+        .arg(battle->get_player_name(who))
+        .arg(reason_str)
     );
   });
-  connect(desk, &Desk::end, this, [this](Ending ending) {
+  connect(battle, &Battle::end, this, [this](Ending ending) {
+    QString ending_str;
+    if(ending == Tie) {
+      ending_str = tr("Tie");
+    } else if(
+      (
+       ending == OrangeGreenWin
+       && (battle->get_player() == Orange || battle->get_player() == Green)
+      )
+      ||
+      (
+       ending == PurpleBlueWin
+       && (battle->get_player() == Purple || battle->get_player() == Blue)
+      )
+    ) {
+      ending_str = tr("You are victorious");
+    } else {
+      ending_str = tr("You are defeated");
+    }
     QMessageBox::information(
       this,
       tr("Message"),
-      tr("Game Over (%1)").arg(int(ending))
+      tr("Game Over (%1)").arg(ending_str)
     );
   });
 }
@@ -122,6 +127,7 @@ void Hub::execute_render() {
 
 
 void Hub::init(Player player, Layout layout) {
+  this->started = false;
   this->player = player;
   this->layout = layout;
   execute_render();
@@ -153,6 +159,16 @@ bool Hub::is_movable(int from, int to) const {
 
 int Hub::get_current_player() const {
   return current_player;
+}
+
+
+void Hub::submit_ready() {
+  emit ready(layout);
+}
+
+
+void Hub::submit_move(int from, int to) {
+  emit move(Cell(from), Cell(to));
 }
 
 

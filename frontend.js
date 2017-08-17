@@ -91,9 +91,9 @@ function get_rendering_coor(group, y, x, lr) {
 	if(y == 0 && x == 0)
 	    return coor(0, 0);
 	else if(x == y && 1 <= y && y <= 4)
-	    return coor(0, 2, y);
+	    return coor(0, 2, get_relative_group(y));
 	else if( ((y-1)+1)%4+1 == x )
-	    return coor(2, 2, y);
+	    return coor(2, 2, get_relative_group(y));
 	else
 	    throw invalid_argument();
     } else {
@@ -121,6 +121,7 @@ function coor2cell(group, y, x, lr) {
 
 
 function cls() {
+    cls_clocks();
     cancel_select();
     for(let g of [route_signs, pieces])
 	while(g.firstChild)
@@ -355,6 +356,14 @@ function render(board) {
 }
 
 
+function cls_clocks() {
+    var clocks = board.querySelectorAll('.clock');
+    for(let clock of clocks) {
+	clock.style.display = 'none';
+    }
+}
+
+
 function set_clock(seconds) {
     function two_digits_num(n) {
 	if(n < 10)
@@ -363,16 +372,15 @@ function set_clock(seconds) {
 	    return ''+n;
     }
     var current = Hub.get_current_player();
+    var clock_index = (current-perspective+4) % 4;
     var clocks = board.querySelectorAll('.clock');
-    for(let clock of clocks) {
-	clock.style.display = 'none';
-    }
-    clocks[current].style.display = '';    
+    cls_clocks();
+    clocks[clock_index].style.display = '';
     clearInterval(timer);
     timer = setInterval(function() {
 	if(seconds > 0)
 	    seconds--;
-	clocks[current]
+	clocks[clock_index]
 	    .querySelector('text')
 	    .textContent = two_digits_num(seconds);
     }, 1000);

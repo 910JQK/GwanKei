@@ -4,12 +4,14 @@ TARGET = GwanKei
 TEMPLATE = app
 
 SOURCES += main.cpp \
+	battle.cpp \
 	ai.cpp \
 	gui.cpp \
 	desk.cpp \
 	game.cpp \
 	core.cpp
-HEADERS += ai.hpp \
+HEADERS += battle.hpp \
+           ai.hpp \
            gui.hpp \
            desk.hpp \
            game.hpp \
