@@ -169,7 +169,11 @@ void Desk::move(Player player, Cell from, Cell to) {
       is_to_flag = true;
     }    
     Feedback feedback = game->move(from, to);
-    if(feedback.get_move_result() == Bigger && is_to_flag) {
+    if(
+       (feedback.get_move_result() == Bigger
+	|| feedback.get_move_result() == Equal
+	)
+       && is_to_flag) {
       Player to_player = to_element.get_player();
       game->annihilate(to_player);
       failed[to_player] = true;
