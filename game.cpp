@@ -275,6 +275,19 @@ namespace GwanKei {
       return layout[player].get(element.get_layout_index());
   }
 
+  std::list<Cell> Game::reachables_of(Cell cell, bool able_to_turn) const {
+    std::list<Cell> result;
+    for(int i=0; i<4631; i++) {
+      if(is_valid_cell_id(i)) {
+	Cell target(i);
+	if(is_movable(cell, target, true, able_to_turn? Piece(32): Piece(0))) {
+	  result.push_back(target);
+	} // movable
+      } // valid cell id
+    } // for cell id
+    return result;
+  }
+
   bool Game::is_movable(Cell from, Cell to, bool assume, Piece piece) const {
     Element from_element = board[from.get_id()];
     Element to_element = board[to.get_id()];

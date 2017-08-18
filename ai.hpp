@@ -32,4 +32,18 @@ public slots:
 };
 
 
+class LowIQ : public AI {
+  Q_OBJECT
+private:
+  double aggressive;
+  int least[105] = {0};
+  bool is_proper_layout(const Layout& layout) const;
+public:
+  LowIQ(Player player, double aggressive = 0.5);
+  Layout get_layout();
+public slots:
+  void status_changed(Game game, Player current_player);
+};
+
+
 #endif //GWANKEI_AI_HPP

@@ -643,9 +643,11 @@ namespace GwanKei {
     } // Central or Others ?
     return result;
   }
+
   bool Cell::operator == (const Cell& right) const {
     return (this->id == right.id);
   }
+
   Cell& Cell::operator = (const Cell& right) {
     this->id = right.id;
     return *this;

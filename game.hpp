@@ -194,6 +194,8 @@ namespace GwanKei {
     Element element_of(Cell cell) const;
     /* 查詢棋子（大小），要求該 element 非空且已知 */
     Piece piece_of(Element element) const;
+    /* 取得 cell 上的棋子所有可直接到達的格子，要求 cell 上有棋子 */
+    std::list<Cell> reachables_of(Cell cell, bool able_to_turn = false) const;
     /** 判斷是否可以從 from 移動到 to.
 	若不假定棋子的身份，則要求 element_of(from) 非空已知 */
     bool is_movable(
