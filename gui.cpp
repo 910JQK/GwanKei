@@ -22,10 +22,17 @@ Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
    (desktop->width() - this->width())/2,
    (desktop->height() - this->height())/2
   );
-  test_action = new QAction(tr("&Test"), this);
-  connect(test_action, &QAction::triggered, view, &View::test);
-  debug_menu = menuBar()->addMenu(tr("&Debug"));
-  debug_menu->addAction(test_action);
+  QMenu* start_menu = menuBar()->addMenu(tr("&Start"));
+  QMenu* bl_menu = start_menu->addMenu(tr("&Brainless AI"));
+
+#define ADD_MENU_ITEM(menu, item, battle_type, text)	\
+  QAction* item = new QAction(text); \
+  connect(item, &QAction::triggered, \
+	  view, [this]() { view->new_game(battle_type); }); \
+  menu->addAction(item);
+
+  ADD_MENU_ITEM(bl_menu, bl_2v2_ne, BL_AI_2v2_NE, tr("2v2 &Ordinary"));
+  ADD_MENU_ITEM(bl_menu, bl_2v2_de, BL_AI_2v2_DE, tr("2v2 &Allied Visible"));
 }
 
 
@@ -42,11 +49,11 @@ View::View(QWidget* parent) : QWebView(parent) {
 }
 
 
-void View::test() {
+void View::new_game(BattleType type) {
   if(battle_created) {
     delete battle;
   }
-  battle = Battle::Create(BL_AI_2v2_NE);
+  battle = Battle::Create(type);
   battle_created = true;
   init_battle();
 }
@@ -61,7 +68,7 @@ void View::init_battle() {
     QString reason_str;
     switch(reason) {
     case FlagLost:
-      reason_str = tr("flag was snatched");
+      reason_str = tr("flag was captured");
       break;
     case NoLivingPiece:
       reason_str = tr("has no living piece");

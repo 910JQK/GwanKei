@@ -20,9 +20,6 @@ class QAction;
 
 class Window : public QMainWindow {
   Q_OBJECT
-private:
-  QMenu* debug_menu;
-  QAction* test_action;
 public:
   Window(QApplication* app, QWidget* parent = nullptr);
   View* view;
@@ -37,7 +34,7 @@ private:
   void init_battle();
 public:
   View(QWidget* parent);
-  void test();
+  void new_game(BattleType type);
 public slots:
   void javaScriptWindowObjectCleared();
 };
