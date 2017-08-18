@@ -352,6 +352,11 @@ function render(board) {
 	}
     }
     draw_route(route);
+    if(mode == 'preparing') {
+	ready_button.style.display = '';
+    } else {
+	ready_button.style.display = 'none';
+    }
     board.deleteLater();
 }
 
@@ -441,6 +446,7 @@ function init() {
     init_clocks();
     Hub.render.connect(render);
     Hub.set_clock.connect(set_clock);
+    ready_button.addEventListener('click', () => Hub.submit_ready());
 }
 
 

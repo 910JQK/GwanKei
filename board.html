@@ -23,6 +23,8 @@
       text { -webkit-user-select: none; }
       .piece.selected > rect { stroke: red; fill: hsla(30, 90%, 50%, 0.3); }
       .piece.selected > text { fill: black; }
+      .button { cursor: pointer; }
+      .button:hover rect { fill: hsla(0, 0%, 80%, 0.8); }
     </style>
   </head>
   <body>
@@ -53,6 +55,12 @@
 	<g id="route_signs">
 	</g>
 	<g id="pieces">
+	</g>
+	<g id="buttons">
+	  <g class="button" id="ready_button" style="display: none;">
+	    <rect x="45" y="45" width="28" height="10" fill="none" stroke="black" />
+	    <text x="59" y="45" dy="7" font-size="8" text-anchor="middle">Ready</text>
+	  </g>
 	</g>
       </svg>
     </div>
