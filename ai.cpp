@@ -1,4 +1,5 @@
-#include <queue>
+#include <algorithm>
+#include <vector>
 #include <cmath>
 #include "ai.hpp"
 
@@ -6,13 +7,37 @@
 using namespace GwanKei;
 
 
-AI::AI(Player player) : QObject() {
-  this->player = player;
+AI::AI() : QObject() {
+
 }
 
 
-Brainless::Brainless(Player player) : AI(player) {
+Player AI::get_player() const {
+  assert(initialized);
+  return player;
+}
 
+
+void AI::set_player(Player player) {
+  assert(!initialized);
+  this->player = player;
+  initialized = true;
+}
+
+
+bool AI::is_initialized() const {
+  return initialized;
+}
+
+
+Brainless::Brainless() : AI() {
+
+}
+
+
+Brainless* Brainless::Create() {
+  Brainless* result = new Brainless();
+  return result;
 }
 
 
@@ -33,6 +58,8 @@ Layout Brainless::get_layout() {
 
 
 void Brainless::status_changed(Game game, Player current_player) {
+  assert(is_initialized());
+  Player player = get_player();
   if(current_player == player) {
     std::list<Cell> my_cells;
     for(int i=0; i<4631; i++) {
@@ -75,9 +102,15 @@ void Brainless::status_changed(Game game, Player current_player) {
 }
 
 
-LowIQ::LowIQ(Player player, double aggressive) : AI(player) {
+LowIQ::LowIQ(double aggressive) : AI() {
   assert(0 <= aggressive && aggressive <= 1);
   this->aggressive = aggressive;
+}
+
+
+LowIQ* LowIQ::Rand() {
+  LowIQ* result = new LowIQ(double(qrand() % 100) / 100);
+  return result;
 }
 
 
@@ -164,20 +197,188 @@ Layout LowIQ::get_layout() {
 
 
 void LowIQ::status_changed(Game game, Player current_player) {
-  if(current_player != player) {
-    return;
-  }
-  std::list<Cell> my_cells;
+
+  assert(is_initialized());
+  Player player = get_player();
+
+// 取得棋子大小
+#define GET_PIECE(cell) game.piece_of(game.element_of(cell))
+// 取得 Element ID
+#define EID(cell) game.element_of(cell).get_id()
+// 空
+#define EMPTY(cell) game.element_of(cell).is_empty()  
+// 非空
+#define NOT_EMPTY(cell) !EMPTY(cell)
+// 己方
+#define IS_ALLIED(cell) !((game.element_of(cell).get_player() - player) % 2)
+// 敵方
+#define IS_ENEMY(cell) !IS_ALLIED(cell)
+// last_game 是上一步的狀態
+#define IS_LAST_GAME_VALID() (last_game.get_steps() == (game.get_steps() - 1))
+// 取得上一步時的棋子大小
+#define LAST_GET_PIECE(cell) last_game.piece_of(last_game.element_of(cell))
+// try to do sth.
+#define TRY(sth) if(sth) return;
+
+  std::vector<Cell> my_cells; // 地雷和大本營以外的棋子（所在的格子）
+  std::vector<Cell> my_bombs;
+  std::vector<Cell> my_engs;
+  Cell my_flag;
+  int count[42] = {0};
   for(int i=0; i<4631; i++) {
     if(is_valid_cell_id(i)) {
       Cell cell(i);
       Element element = game.element_of(cell);
       if(!element.is_empty() && element.get_player() == player) {
-	my_cells.push_back(cell);
+	Piece piece = game.piece_of(element);
+	if(piece != Piece(41) && cell.get_type() != Headquarter) {
+	  my_cells.push_back(cell);
+	}
+	if(piece == Piece(31)) {
+	  my_flag = cell;
+	} else if(piece == Piece(32)) {
+	  my_engs.push_back(cell);
+	} else if(piece == Piece(0)) {
+	  my_bombs.push_back(cell);
+	}
+	count[piece.get_id()]++;
       }
     }
   }
+  std::sort(
+    my_cells.begin(), my_cells.end(),
+    [&game](const Cell& l, const Cell& r) -> bool {
+      int pl = GET_PIECE(l).get_id();
+      int pr = GET_PIECE(r).get_id();
+      if(pl == 0) pl = 42;
+      if(pr == 0) pr = 42;
+      return (pl > pr);
+    }
+  );
+  Feedback last_feedback = game.get_last_feedback();
+  MoveResult move_result = last_feedback.get_move_result();
+  Cell moved = last_feedback.get_moved_cell();
+  Cell target = last_feedback.get_target_cell();
+  if(IS_LAST_GAME_VALID() &&
+     (move_result == Smaller || move_result == Bigger) ) {
+    // 要看碰子前的資料只能靠上次的記錄，因為 killed 已經沒了
+    Cell killer;
+    Cell killed;
+    if(move_result == Bigger) {
+      killer = moved;
+      killed = target;
+    } else {
+      killer = target;
+      killed = moved;
+    }
+    int killer_id = last_game.element_of(killer).get_id();
+    int killed_id = last_game.element_of(killed).get_id();
+    num_of_kill[killer_id]++;
+    int this_time_least = 0;
+    if(!last_game.element_of(killed).is_unknown()) {
+      this_time_least = LAST_GET_PIECE(killed).get_id() + 1;
+    } else if(least[killed_id] != 0) {
+      this_time_least = least[killed_id] + 1;
+    }
+    if(this_time_least > least[killer_id]) {
+      least[killer_id] = this_time_least;
+    }
+  }
 
-  // to be implemented
-  
+  if(current_player == player) {
+
+    auto try2kill_use_big = [this, &game, &my_cells](Cell target) -> bool {
+      for(auto I=my_cells.begin(); I!=my_cells.end(); I++) {
+	if(game.is_movable(*I, target)) {
+	  emit move(*I, target);
+	  return true;
+	}
+      }
+      return false;
+    };
+    
+    auto try2kill_use_small = [this, &game, &my_cells, &my_engs](Cell target) {
+      for(auto I=my_cells.rbegin(); I!=my_cells.rend(); I++) {
+	if(GET_PIECE(*I) != Piece(32) && game.is_movable(*I, target)) {
+	  emit move(*I, target);
+	  return true;
+	}
+      }
+      if(least[EID(target)] == 0) {
+	for(auto I=my_engs.begin(); I!=my_engs.end(); I++) {
+	  if(game.is_movable(*I, target)) {
+	    emit move(*I, target);
+	    return true;
+	  }
+	}
+      }
+      return false;
+    };
+
+    std::list<Bound> flag_adj = my_flag.get_adjacents();
+    for(auto I=flag_adj.begin(); I!=flag_adj.end(); I++) {
+      Cell cell = I->get_target();
+      if(NOT_EMPTY(cell)) {
+	if(IS_ENEMY(cell)) {
+	  TRY(try2kill_use_big(cell));
+	} else if(GET_PIECE(cell) == Piece(41)) {
+	  Cell up(
+	    cell.get_group(), (cell.get_y() - 1), cell.get_x(), cell.get_lr()
+	  );
+	  if(up.get_type() != Camp && NOT_EMPTY(up) && IS_ENEMY(up)) {
+	    TRY(try2kill_use_small(cell));
+	  }
+	} // enemy or mine	
+      } // a piece
+    } // adjacents of flag
+    for(auto I=my_bombs.begin(); I!=my_bombs.end(); I++) {
+      std::list<Cell> reachables = game.reachables_of(*I);
+      for(auto J=reachables.begin(); J!=reachables.end(); J++) {
+	if(NOT_EMPTY(*J) && IS_ENEMY(*J)) {
+          #define BANG() emit move(*I, *J); return;
+	  int min = least[EID(*J)];
+	  if(min == 40 || min == 39) {
+	    BANG();
+	  } else if(min == 38) {
+	    if(my_bombs.size() == 2
+	       && aggressive > pow(0.85, num_of_kill[EID(*J)]) ) {
+	      BANG();
+	    } else if(aggressive > pow(0.98, num_of_kill[EID(*J)]) ) {
+	      BANG();
+	    }
+	  }
+	} // enemy
+      } // all reachables of bomb      
+    } // all bombs
+
+    for(unsigned int i=0; i<my_cells.size()*5; i++) {
+      Cell selected_cell = my_cells[qrand() % my_cells.size()];
+      std::list<Cell> list = game.reachables_of(selected_cell);
+      std::vector<Cell> reachables;
+      for(auto J=list.begin(); J!=list.end(); J++) {
+	if( !(NOT_EMPTY(*J) && IS_ALLIED(*J)) ) {
+	  reachables.push_back(*J);
+	}
+      }
+      if(reachables.size() == 0) {
+	continue;
+      } else {
+	for(unsigned int j=0; j<reachables.size()*5; j++) {
+	  Cell target = reachables[qrand() % reachables.size()];
+          #define GO_TO_TARGET() emit move(selected_cell, target); return
+	  if(EMPTY(target)) {
+	    GO_TO_TARGET();
+	  } else if(NOT_EMPTY(target) && IS_ENEMY(target)) {
+	    if(GET_PIECE(selected_cell).get_id() >= least[EID(target)]) {
+	      GO_TO_TARGET();
+	    } // big enough
+	  } // empty or enemy
+	} // random a reachable
+	continue;
+      } // has reachables?
+    } // random a cell
+    
+  } // this player
+
+  last_game = game;
 }

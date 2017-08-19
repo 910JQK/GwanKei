@@ -12,7 +12,10 @@ using namespace GwanKei;
 
 enum BattleType {
   BL_AI_2v2_NE,
-  BL_AI_2v2_DE
+  BL_AI_2v2_DE,
+  LI_AI_1v1,
+  LI_AI_2v2_NE,
+  LI_AI_2v2_DE
 };
 
 
@@ -22,7 +25,8 @@ private:
   Player player;
 public:
   Desk *desk;
-  Battle(Player player);
+  AI** ai;
+  Battle(Player player, AI** ai, bool is_1v1, MaskMode mask_mode);
   ~Battle();
   void init_desk();
   Player get_player() const;
@@ -35,14 +39,6 @@ signals:
 public slots:
   void ready(Layout layout);
   void move(Cell from, Cell to);
-};
-
-
-class BL_AI_2v2 : public Battle {
-  Q_OBJECT
-public:
-  Brainless** ai;
-  BL_AI_2v2(Player player, MaskMode mask_mode);
 };
 
 

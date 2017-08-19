@@ -11,9 +11,14 @@ using namespace GwanKei;
 
 class AI : public QObject {
   Q_OBJECT
-public:
+private:
   Player player;
-  AI(Player player);
+  bool initialized = false;
+public:
+  AI();
+  Player get_player() const;
+  void set_player(Player player);
+  bool is_initialized() const;
   virtual Layout get_layout() = 0;
 signals:
   void move(Cell from, Cell to);
@@ -25,8 +30,9 @@ public slots:
 class Brainless : public AI {
   Q_OBJECT
 public:
-  Brainless(Player player);
+  Brainless();
   Layout get_layout();
+  static Brainless* Create();
 public slots:
   void status_changed(Game game, Player current_player);
 };
@@ -37,10 +43,13 @@ class LowIQ : public AI {
 private:
   double aggressive;
   int least[105] = {0};
+  int num_of_kill[105] = {0};
+  Game last_game;
   bool is_proper_layout(const Layout& layout) const;
 public:
-  LowIQ(Player player, double aggressive = 0.5);
+  LowIQ(double aggressive = 0.5);
   Layout get_layout();
+  static LowIQ* Rand();
 public slots:
   void status_changed(Game game, Player current_player);
 };

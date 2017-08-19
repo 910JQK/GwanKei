@@ -215,6 +215,14 @@ namespace GwanKei {
     return route;
   }
 
+  Cell Feedback::get_moved_cell() const {
+    return route.front();
+  }
+
+  Cell Feedback::get_target_cell() const {
+    return route.back();
+  }
+
   Feedback& Feedback::operator = (const Feedback& right) {
     this->move_result = right.move_result;
     this->route = right.route;
@@ -398,11 +406,8 @@ namespace GwanKei {
       }
       board[from.get_id()] = Element();
     }
+    steps++;
     last_feedback = Feedback(result, route);
-    return last_feedback;
-  }
-
-  Feedback Game::get_last_feedback() const {
     return last_feedback;
   }
 
@@ -460,6 +465,7 @@ namespace GwanKei {
     memcpy(layout, right.layout, 4*sizeof(Layout));
     memcpy(enabled, right.enabled, 4*sizeof(bool));
     memcpy(show_flag, right.show_flag, 4*sizeof(bool));
+    steps = right.steps;
     last_feedback = right.last_feedback;
     return *this;
   }

@@ -166,6 +166,8 @@ namespace GwanKei {
     bool is_nothing() const;
     MoveResult get_move_result() const;
     std::list<Cell> get_route() const;
+    Cell get_moved_cell() const;
+    Cell get_target_cell() const;
     Feedback& operator = (const Feedback& right);
   };
 
@@ -183,9 +185,14 @@ namespace GwanKei {
     bool enabled[4] = {0}; // 哪些玩家參與了游戲
     bool show_flag[4] = {0}; // 亮旗？
     Feedback last_feedback; // 最近一次玩家操作結果
+    bool initialized = true;
+    int steps = 0;
     void init_board();
   public:
-    Game() {};
+    Game() { initialized = false; };
+    bool is_initialized() const { return initialized; };
+    int get_steps() const { return steps; };
+    Feedback get_last_feedback() const { return last_feedback; };
     /* 單挑局, 默認南北方向，若設 EW = true 則在東西方向 */
     Game(const Layout& layout_S, const Layout& layout_N, bool EW = false);
     /* 2v2, 輸入數組 layouts[0,1,2,3] */
@@ -205,8 +212,6 @@ namespace GwanKei {
     bool has_living_piece(Player player) const;
     /* 移動棋子，可指定 force_result 為非 Nothing 的值以作假定 */
     Feedback move(Cell from, Cell to, MoveResult force_result = Nothing);
-    /* return last_feedback; */
-    Feedback get_last_feedback() const;
     /* 銷毁 player 的所有棋子 */
     void annihilate(Player player);
     /* 按照游戲模式（亮子模式）取得隐去未知信息的 Game Object */

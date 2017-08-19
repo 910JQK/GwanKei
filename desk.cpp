@@ -167,8 +167,8 @@ void Desk::move(Player player, Cell from, Cell to) {
     bool is_to_flag = false;
     if(!to_element.is_empty() && game->piece_of(to_element).get_id() == 31) {
       is_to_flag = true;
-    }    
-    Feedback feedback = game->move(from, to);
+    } 
+    Feedback feedback = game->move(from, to);    
     if(
        (feedback.get_move_result() == Bigger
 	|| feedback.get_move_result() == Equal
