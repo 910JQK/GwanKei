@@ -385,6 +385,9 @@ void LowIQ::status_changed(Game game, Player current_player) {
     } // all bombs
 
     /* 【抵抗進攻】 */
+    static auto bottom_first = [](const Cell& l, const Cell& r) -> bool {
+      return (l.get_y() > r.get_y());
+    };
     std::vector<Cell> invaders;
     for(int i=0; i<25; i++) {
       Cell cell = convert_layout_index_to_cell(i, player);
@@ -392,20 +395,19 @@ void LowIQ::status_changed(Game game, Player current_player) {
 	invaders.push_back(cell);
       }
     }
-    std::sort(
-      invaders.begin(),
-      invaders.end(),
-      [](const Cell& l, const Cell& r) -> bool {
-	return (l.get_y() > r.get_y());
-      }
-    );
+    std::sort(invaders.begin(), invaders.end(), bottom_first);
     for(auto I=invaders.begin(); I!=invaders.end(); I++) {
       Cell invader = *I;
       std::list<Bound> adj = invader.get_adjacents();
+      std::vector<Cell> adj_camps;
       for(auto J=adj.begin(); J!=adj.end(); J++) {
 	if(J->get_target().get_type() == Camp) {
-	  TRY(try2occupy(J->get_target()) );
+	  adj_camps.push_back(J->get_target());
 	}
+      }
+      std::sort(adj_camps.begin(), adj_camps.end(), bottom_first);
+      if(adj_camps.size() > 0) {
+	TRY(try2occupy(adj_camps[0]) );
       }
       int min = least[EID(invader)];
       int nk = num_of_kill[EID(invader)];
@@ -437,9 +439,62 @@ void LowIQ::status_changed(Game game, Player current_player) {
       } // rand a neighbor
     } // for invaders
 
+    /* 【補營】 */
+    static const CellGroup my_cell_group = convert_player_to_orient(player);
+    static const Cell camps[5] = {
+      Cell(my_cell_group, 2, 2, Left),
+      Cell(my_cell_group, 2, 2, Right),
+      Cell(my_cell_group, 4, 2, Left),
+      Cell(my_cell_group, 4, 2, Right),
+      Cell(my_cell_group, 3, 3, Left)
+    };
+    for(int i=0; i<5; i++) {
+      Cell camp = camps[i];
+      if(EMPTY(camp)) {
+	std::list<Bound> adj = camp.get_adjacents();
+	std::vector<Cell> adj_cells;
+	for(auto J=adj.begin(); J!=adj.end(); J++) {
+	  adj_cells.push_back(J->get_target());
+	}
+	for(int j=0; j<adj_cells.size()*3; j++) {
+	  Cell neighbor = adj_cells[qrand() % adj_cells.size()];
+          #define OCCUPY_CAMP() emit move(neighbor, camp); return;
+	  if(NOT_EMPTY(neighbor) && IS_MYSELF(neighbor)) {
+	    int p = GET_PIECE(neighbor).get_id();
+	    if(my_cells.size() >= 15+4*(1-aggressive)) {
+	      if(camp.get_y() != 3) {
+		if(p == 0) {
+		  if(aggressive < pow(RAND(), 3)*0.75) {
+		    OCCUPY_CAMP();
+		  }
+		} else {
+		  if(p <= 36+5*(1-aggressive)) {
+		    OCCUPY_CAMP();
+		  }
+		}  // bomb or not bomb
+	      } else {
+		break;
+	      } // non-central camp
+	    } else {
+	      if(camp.get_y() == 4) {
+		OCCUPY_CAMP();
+	      } else {
+		break;
+	      } // bottom camp or not
+	    } // still have enough pieces or not
+	  } // my piece
+	} // for adjacents
+      } // empty camp
+    } // for camp at my cell group
+
     /* 【胡亂走】 */
     for(int i=0; i<my_cells.size()*5; i++) {
       Cell selected_cell = my_cells[qrand() % my_cells.size()];
+      if(selected_cell.get_group() != Central && selected_cell.get_y() >= 5) {
+	if(my_cells.size() >= 15 + 4*aggressive) {
+	  continue;
+	}
+      }
       std::list<Cell> list = game.reachables_of(selected_cell);
       std::vector<Cell> reachables;
       for(auto J=list.begin(); J!=list.end(); J++) {
@@ -452,6 +507,12 @@ void LowIQ::status_changed(Game game, Player current_player) {
       } else {
 	for(int j=0; j<reachables.size()*5; j++) {
 	  Cell target = reachables[qrand() % reachables.size()];
+	  if(
+	     opposite_orient(target.get_group())
+	     == convert_player_to_orient(player)
+	  ) {
+	    continue;
+	  }
           #define GO_TO_TARGET() emit move(selected_cell, target); return
 	  if(EMPTY(target)) {
 	    GO_TO_TARGET();
