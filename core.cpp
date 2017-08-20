@@ -222,6 +222,11 @@ namespace GwanKei {
     }
   }
 
+  Cell Cell::get_above() const {
+    // 一般用於 6 線的子
+    return Cell(get_group(), (get_y() - 1), get_x(), get_lr());
+  }
+
   std::string Cell::to_string() const {
     /**
        【返回格式】

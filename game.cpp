@@ -1,3 +1,4 @@
+#include <vector>
 #include <cstring>
 #include <cassert>
 #include "game.hpp"
@@ -195,7 +196,6 @@ namespace GwanKei {
 
   Feedback::Feedback() {
     // null
-    // this->move_result = Null
   }
 
   Feedback::Feedback(MoveResult move_result, const std::list<Cell>& route) {
@@ -205,6 +205,34 @@ namespace GwanKei {
 
   bool Feedback::is_nothing() const {
     return (move_result == Nothing);
+  }
+
+  bool Feedback::is_route_turned() const {
+    std::vector<Cell> route_arr;
+    std::vector<Bound> bounds;
+    for(auto I=route.begin(); I!=route.end(); I++) {
+      route_arr.push_back(*I);
+    }
+    for(int i=0; (i+1)<route_arr.size(); i++) {
+      Cell current = route_arr[i];
+      Cell next = route_arr[i+1];
+      std::list<Bound> adjacents = current.get_adjacents();
+      for(auto J=adjacents.begin(); J!=adjacents.end(); J++) {
+	if(J->get_target() == next) {
+	  bounds.push_back(*J);
+	} // the corressponding bound
+      } // for adjacents
+    } // for i (index of arr)
+    for(int i=0; (i+1)<bounds.size(); i++) {
+      Bound current = bounds[i];
+      Bound next = bounds[i+1];
+      if(!next.is_linkable(current, false)) {
+	// 不能轉向的話接不上
+	// 結論：轉向了
+	return true;
+      }
+    }
+    return false;
   }
 
   MoveResult Feedback::get_move_result() const {

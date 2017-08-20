@@ -209,6 +209,8 @@ void LowIQ::status_changed(Game game, Player current_player) {
 #define EMPTY(cell) game.element_of(cell).is_empty()  
 // 非空
 #define NOT_EMPTY(cell) !EMPTY(cell)
+// 自已
+#define IS_MYSELF(cell) (game.element_of(cell).get_player() == player)
 // 己方
 #define IS_ALLIED(cell) (!game.is_1v1() \
 		       && !((game.element_of(cell).get_player() - player) % 2))
@@ -220,6 +222,13 @@ void LowIQ::status_changed(Game game, Player current_player) {
 #define LAST_GET_PIECE(cell) last_game.piece_of(last_game.element_of(cell))
 // try to do sth.
 #define TRY(sth) if(sth) return;
+// 取得 0 ~ 1 之間隨機數
+#define RAND() (double(qrand() % 100) / 100)
+// Convert std::list to std::vector
+#define LIST_2_VEC(list, vector) \
+  for(auto item=list.begin(); item!=list.end(); item++) { \
+    vector.push_back(*item)				  \
+  }
 
   std::vector<Cell> my_cells; // 地雷和大本營以外的棋子（所在的格子）
   std::vector<Cell> my_bombs;
@@ -275,15 +284,23 @@ void LowIQ::status_changed(Game game, Player current_player) {
     int killer_id = last_game.element_of(killer).get_id();
     int killed_id = last_game.element_of(killed).get_id();
     num_of_kill[killer_id]++;
-    int this_time_least = 0;
+    int this_time_least = 0; // 用 0 表示還沒有信息
     if(!last_game.element_of(killed).is_unknown()) {
-      this_time_least = LAST_GET_PIECE(killed).get_id() + 1;
+      int killed_piece = LAST_GET_PIECE(killed).get_id();
+      if(killed_piece != 41) {
+	this_time_least = killed_piece + 1;
+      } else {
+	this_time_least = 1; // 用 1 表示確信是工兵
+      }
     } else if(least[killed_id] != 0) {
       this_time_least = least[killed_id] + 1;
     }
     if(this_time_least > least[killer_id]) {
       least[killer_id] = this_time_least;
     }
+  }
+  if(move_result == Nothing && last_feedback.is_route_turned()) {
+    least[EID(target)] = 1;
   }
 
   if(current_player == player) {
@@ -297,15 +314,20 @@ void LowIQ::status_changed(Game game, Player current_player) {
       }
       return false;
     };
+
+    auto try2occupy = try2kill_use_big;
     
     auto try2kill_use_small = [this, &game, &my_cells, &my_engs](Cell target) {
+      // 有棋可用？（從小棋開始找）
       for(auto I=my_cells.rbegin(); I!=my_cells.rend(); I++) {
 	if(GET_PIECE(*I) != Piece(32) && game.is_movable(*I, target)) {
 	  emit move(*I, target);
 	  return true;
 	}
       }
-      if(least[EID(target)] == 0) {
+      // 實在不行出動工兵試圖打對
+      int target_min = least[EID(target)];
+      if(target_min == 1 || (target_min == 0 && aggressive < 0.3*RAND() )) {
 	for(auto I=my_engs.begin(); I!=my_engs.end(); I++) {
 	  if(game.is_movable(*I, target)) {
 	    emit move(*I, target);
@@ -316,22 +338,32 @@ void LowIQ::status_changed(Game game, Player current_player) {
       return false;
     };
 
+    /* 【護旗】 */
     std::list<Bound> flag_adj = my_flag.get_adjacents();
     for(auto I=flag_adj.begin(); I!=flag_adj.end(); I++) {
       Cell cell = I->get_target();
+      Cell above = cell.get_above();
       if(NOT_EMPTY(cell)) {
 	if(IS_ENEMY(cell)) {
+	  // 軍旗遭到直接威脅
 	  TRY(try2kill_use_big(cell));
 	} else if(GET_PIECE(cell) == Piece(41)) {
-	  Cell up(
-	    cell.get_group(), (cell.get_y() - 1), cell.get_x(), cell.get_lr()
-	  );
-	  if(up.get_type() != Camp && NOT_EMPTY(up) && IS_ENEMY(up)) {
-	    TRY(try2kill_use_small(cell));
+	  // 疑似工兵尋破綻
+	  if(above.get_type() != Camp && NOT_EMPTY(above) && IS_ENEMY(above)) {
+	    if(least[EID(above)] == 0 || least[EID(above)] == 1) {
+	      TRY(try2kill_use_small(above));
+	    }
 	  }
 	} // enemy or mine	
-      } // a piece
+      } else {
+	// 旗左右空了，不擋就下去了
+	if(above.get_type() != Camp && NOT_EMPTY(above) && IS_ENEMY(above)) {
+	  TRY(try2kill_use_big(above));
+	}
+      }
     } // adjacents of flag
+
+    /* 【炸大子】 */
     for(auto I=my_bombs.begin(); I!=my_bombs.end(); I++) {
       std::list<Cell> reachables = game.reachables_of(*I);
       for(auto J=reachables.begin(); J!=reachables.end(); J++) {
@@ -352,7 +384,61 @@ void LowIQ::status_changed(Game game, Player current_player) {
       } // all reachables of bomb      
     } // all bombs
 
-    for(unsigned int i=0; i<my_cells.size()*5; i++) {
+    /* 【抵抗進攻】 */
+    std::vector<Cell> invaders;
+    for(int i=0; i<25; i++) {
+      Cell cell = convert_layout_index_to_cell(i, player);
+      if(NOT_EMPTY(cell) && IS_ENEMY(cell)) {
+	invaders.push_back(cell);
+      }
+    }
+    std::sort(
+      invaders.begin(),
+      invaders.end(),
+      [](const Cell& l, const Cell& r) -> bool {
+	return (l.get_y() > r.get_y());
+      }
+    );
+    for(auto I=invaders.begin(); I!=invaders.end(); I++) {
+      Cell invader = *I;
+      std::list<Bound> adj = invader.get_adjacents();
+      for(auto J=adj.begin(); J!=adj.end(); J++) {
+	if(J->get_target().get_type() == Camp) {
+	  TRY(try2occupy(J->get_target()) );
+	}
+      }
+      int min = least[EID(invader)];
+      int nk = num_of_kill[EID(invader)];
+      std::list<Cell> list = game.reachables_of(invader);
+      std::vector<Cell> reachables;
+      for(auto J=list.begin(); J!=list.end(); J++) {
+	if(IS_MYSELF(*J) && GET_PIECE(*J) != Piece(0)) {
+	  reachables.push_back(*J);
+	}
+      }
+      for(int j=0; j<reachables.size()*3; j++) {
+	Cell neighbor = reachables[qrand() % reachables.size()];
+        #define TRY_TO_RESIST() emit move(neighbor, invader); return;
+	if(IS_MYSELF(neighbor)) {
+	  int p = GET_PIECE(neighbor).get_id();
+	  if(p > min) {
+	    if((p - min) > 3*(1-aggressive)) {
+	      TRY_TO_RESIST();
+	    } else if(
+	              (p >= 38 || (aggressive > 0.7 && p >= 37))
+		      && num_of_kill[EID(neighbor)] <= 3*aggressive
+	    ) {
+	      TRY_TO_RESIST();
+	    } else if(nk <= 2*aggressive && neighbor.get_type() != Camp) {
+	      TRY_TO_RESIST();
+	    }
+	  } // p > min
+	} // my piece
+      } // rand a neighbor
+    } // for invaders
+
+    /* 【胡亂走】 */
+    for(int i=0; i<my_cells.size()*5; i++) {
       Cell selected_cell = my_cells[qrand() % my_cells.size()];
       std::list<Cell> list = game.reachables_of(selected_cell);
       std::vector<Cell> reachables;
@@ -364,7 +450,7 @@ void LowIQ::status_changed(Game game, Player current_player) {
       if(reachables.size() == 0) {
 	continue;
       } else {
-	for(unsigned int j=0; j<reachables.size()*5; j++) {
+	for(int j=0; j<reachables.size()*5; j++) {
 	  Cell target = reachables[qrand() % reachables.size()];
           #define GO_TO_TARGET() emit move(selected_cell, target); return
 	  if(EMPTY(target)) {

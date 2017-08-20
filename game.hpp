@@ -160,10 +160,12 @@ namespace GwanKei {
   private:
     MoveResult move_result = Nothing; // 碰子結果，若只是移動未碰子則為 Nothing
     std::list<Cell> route; // 棋子行進路線
+    bool turned; // 是否有轉向（工兵？）
   public:
     Feedback();
     Feedback(MoveResult move_result, const std::list<Cell>& route);
     bool is_nothing() const;
+    bool is_route_turned() const;
     MoveResult get_move_result() const;
     std::list<Cell> get_route() const;
     Cell get_moved_cell() const;
@@ -211,7 +213,8 @@ namespace GwanKei {
     ) const;
     /* 判斷 player 是否有活棋，用於無棋可走的判負條件 */
     bool has_living_piece(Player player) const;
-    /* 移動棋子，可指定 force_result 為非 Nothing 的值以作假定 */
+    /** 移動棋子，可指定 force_result 為非 Nothing 的值以作假定
+	請務必先用 is_movable() 檢查是否可移動再調用此方法 */
     Feedback move(Cell from, Cell to, MoveResult force_result = Nothing);
     /* 銷毁 player 的所有棋子 */
     void annihilate(Player player);

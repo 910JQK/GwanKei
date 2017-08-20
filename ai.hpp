@@ -42,8 +42,8 @@ class LowIQ : public AI {
   Q_OBJECT
 private:
   double aggressive;
-  int least[105] = {0};
-  int num_of_kill[105] = {0};
+  int least[105] = {0}; // 記錄最小猜測，下標為 Element::id
+  int num_of_kill[105] = {0}; // 記錄吃子個數，下標同
   Game last_game;
   bool is_proper_layout(const Layout& layout) const;
 public:
