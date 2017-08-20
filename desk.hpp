@@ -5,23 +5,28 @@
 #include <QList>
 #include <QString>
 #include <QTimer>
+#include <vector>
 #include "game.hpp"
 
 using namespace GwanKei;
 
 const unsigned int WAITING_TIME = 30;
 
-enum Ending {
-  OrangeGreenWin,
-  PurpleBlueWin,
-  Tie
+enum End4Player {
+  Tie,
+  Win,
+  GG
+  // 勿更改此處順序，作下標用
 };
+
+typedef std::vector<End4Player> Ending;
 
 enum FailReason {
   FlagLost,          // 軍棋被扛
   NoLivingPiece,     // 無棋可走
   Surrender,         // 投降
   Timeout            // 超時
+  // 順序也不要改
 };
 
 class Desk : public QObject {
@@ -36,7 +41,7 @@ private:
   Player current_player;
   QTimer timer;
   MaskMode mask_mode;
-  bool is_1_v_1;
+  bool is_1v1;
   int step_count = 0;
 private:
   void change_status(int single_player = -1);
@@ -44,7 +49,7 @@ private:
   void try_to_start();
   bool check_ending();
 public:
-  Desk(MaskMode mask_mode = NoExpose, bool is_1_v_1 = false);
+  Desk(MaskMode mask_mode = NoExpose, bool is_1v1 = false);
   ~Desk();
   QString get_player_name(Player player) const;
   QStringList get_players() const;

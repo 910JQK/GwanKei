@@ -264,6 +264,15 @@ namespace GwanKei {
     init_board();
   }
 
+  bool Game::is_1v1() const {
+    for(int i=0; i<4; i++) {
+      if(!enabled[i]) {
+	return true;
+      }
+    }
+    return false;
+  }
+
   Element Game::element_of(Cell cell) const {
     return board[cell.get_id()];
   }
@@ -323,7 +332,7 @@ namespace GwanKei {
 	          int(to_element.get_player())
 		  == (from_element.get_player()+2)%4
 		  )
-	      && enabled[0] && enabled[1] && enabled[2] && enabled[3]
+	      && !is_1v1()
       ) {
       return false;
     } else {
@@ -426,6 +435,9 @@ namespace GwanKei {
     Game result = *this;
     auto set_unknown = [&result, perspective, this](int delta) {
       Player player = static_cast<Player>((perspective+delta)%4);
+      if(!enabled[player]) {
+	return;
+      }
       result.layout[player] = Layout::Masked();
       bool has40 = false;
       int pos31 = -1;

@@ -213,7 +213,7 @@ function draw_piece(player, group, y, x, lr, piece_id) {
 		    if(selected_cell != cell) {
 			if(perspective == player_of_cell) {
 			    select_cell(cell);
-			} else if(player_of_cell != (perspective+2)%4) {
+			} else if(Hub.is_movable(selected_cell, cell)) {
 			    Hub.submit_move(selected_cell, cell);
 			}
 		    }

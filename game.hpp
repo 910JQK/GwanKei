@@ -193,6 +193,7 @@ namespace GwanKei {
     bool is_initialized() const { return initialized; };
     int get_steps() const { return steps; };
     Feedback get_last_feedback() const { return last_feedback; };
+    bool is_1v1() const;
     /* 單挑局, 默認南北方向，若設 EW = true 則在東西方向 */
     Game(const Layout& layout_S, const Layout& layout_N, bool EW = false);
     /* 2v2, 輸入數組 layouts[0,1,2,3] */

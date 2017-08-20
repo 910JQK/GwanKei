@@ -210,7 +210,8 @@ void LowIQ::status_changed(Game game, Player current_player) {
 // 非空
 #define NOT_EMPTY(cell) !EMPTY(cell)
 // 己方
-#define IS_ALLIED(cell) !((game.element_of(cell).get_player() - player) % 2)
+#define IS_ALLIED(cell) (!game.is_1v1() \
+		       && !((game.element_of(cell).get_player() - player) % 2))
 // 敵方
 #define IS_ENEMY(cell) !IS_ALLIED(cell)
 // last_game 是上一步的狀態

@@ -2,9 +2,9 @@
 #include "desk.hpp"
 
 
-Desk::Desk(MaskMode mask_mode, bool is_1_v_1) : QObject() {
+Desk::Desk(MaskMode mask_mode, bool is_1v1) : QObject() {
   this->mask_mode = mask_mode;
-  this->is_1_v_1 = is_1_v_1;
+  this->is_1v1 = is_1v1;
   timer.setSingleShot(true);
   timer.setInterval(WAITING_TIME*1000);
   connect(&timer, &QTimer::timeout, this, &Desk::timeout);
@@ -50,6 +50,9 @@ void Desk::change_status(int single_player /* = -1 */) {
     if(single_player != -1 && single_player != i) {
       continue;
     }
+    if(!ready_state[i]) {
+      continue; // 1v1, some player is not enabled
+    }
     Player player = static_cast<Player>(i);
     emit status_changed(
 	player,
@@ -67,7 +70,7 @@ void Desk::next_turn() {
     if(check_ending())
       return;
     current_player = static_cast<Player>((current_player+1)%4);
-  } while(failed[current_player]);
+  } while(failed[current_player] || !ready_state[current_player]);
   if(!game->has_living_piece(current_player)) {
     game->annihilate(current_player);
     failed[current_player] = true;
@@ -83,16 +86,20 @@ void Desk::try_to_start() {
   if(started)
     return;
   static auto start = [this]{
-    this->started = true;
-    this->current_player = Blue;
-    this->next_turn();
-    this->change_status();
+    started = true;
+    current_player = Blue; // next = Orange
+    next_turn();
+    change_status();
   };
-  if(is_1_v_1) {
-    if(ready_state[0] && ready_state[2]) {
+  if(is_1v1) {
+    if(  ready_state[0] && ready_state[2]
+         && !ready_state[1] && !ready_state[3]
+    ) {
       game = new Game(layouts[0], layouts[2]);
       start();
-    } else if(ready_state[1] && ready_state[3]) {
+    } else if(  ready_state[1] && ready_state[3]
+	        && !ready_state[0] && !ready_state[2]
+    ) {
       game = new Game(layouts[1], layouts[3], true);
       start();
     }
@@ -106,14 +113,29 @@ void Desk::try_to_start() {
 
 
 bool Desk::check_ending() {
-  if(failed[0] && failed[2]) {
-    emit end(PurpleBlueWin);
-    return true;
-  } else if(failed[1] && failed[3]) {
-    emit end(OrangeGreenWin);
-    return true;
+  #define END() emit end(ending); return true;
+  Ending ending = {Tie, Tie, Tie, Tie};
+  if(is_1v1) {
+    for(int i=0; i<4; i++) {
+      if(failed[i]) {
+	ending[i] = GG;
+	ending[(i+2)%4] = Win;
+	END();
+      }
+    }
+    // if ... -> tie (to be implemented)
   } else {
-    // tie, to be implemented
+    if(failed[0] && failed[2]) {
+      ending[0] = ending[2] = GG;
+      ending[3] = ending[1] = Win;
+      END();
+    } else if(failed[1] && failed[3]) {
+      ending[3] = ending[1] = GG;
+      ending[0] = ending[2] = Win;
+      END();
+    } else /* if ... */ {
+      // tie, to be implemented
+    }
   }
   return false;
 }

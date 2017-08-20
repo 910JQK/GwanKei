@@ -24,8 +24,9 @@ Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
   );
   QMenu* start_menu = menuBar()->addMenu(tr("&Start"));
   QMenu* bl_menu = start_menu->addMenu(tr("&Brainless AI"));
+  QMenu* li_menu = start_menu->addMenu(tr("&Low-IQ AI"));
 
-#define ADD_MENU_ITEM(menu, item, battle_type, text)	\
+  #define ADD_MENU_ITEM(menu, item, battle_type, text)	\
   QAction* item = new QAction(text); \
   connect(item, &QAction::triggered, \
 	  view, [this]() { view->new_game(battle_type); }); \
@@ -33,6 +34,9 @@ Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
 
   ADD_MENU_ITEM(bl_menu, bl_2v2_ne, BL_AI_2v2_NE, tr("2v2 &Ordinary"));
   ADD_MENU_ITEM(bl_menu, bl_2v2_de, BL_AI_2v2_DE, tr("2v2 &Allied Visible"));
+  ADD_MENU_ITEM(li_menu, li_1v1, LI_AI_1v1, tr("&1v1"));
+  ADD_MENU_ITEM(li_menu, li_2v2_ne, LI_AI_2v2_NE, tr("2v2 &Ordinary"));
+  ADD_MENU_ITEM(li_menu, li_2v2_de, LI_AI_2v2_DE, tr("2v2 &Allied Visible"));
 }
 
 
@@ -65,52 +69,29 @@ void View::init_battle() {
   connect(hub, &Hub::move, battle, &Battle::move);
   connect(battle, &Battle::status_changed, hub, &Hub::status_changed);
   connect(battle, &Battle::fail, this, [this](Player who, FailReason reason) {
-    QString reason_str;
-    switch(reason) {
-    case FlagLost:
-      reason_str = tr("flag was captured");
-      break;
-    case NoLivingPiece:
-      reason_str = tr("has no living piece");
-      break;
-    case Surrender:
-      reason_str = tr("surrendered");
-      break;
-    case Timeout:
-      reason_str = tr("timeout count exceeded limit");
-      break;
-    }
+    const QString reason_str[4] = {
+      tr("flag was captured"),
+      tr("has no living piece"),
+      tr("surrendered"),
+      tr("timeout count exceeded limit")
+    };
     QMessageBox::information(
       this,
       tr("Message"),
       tr("%1 failed (%2)")
         .arg(battle->get_player_name(who))
-        .arg(reason_str)
+        .arg(reason_str[reason])
     );
   });
   connect(battle, &Battle::end, this, [this](Ending ending) {
-    QString ending_str;
-    if(ending == Tie) {
-      ending_str = tr("Tie");
-    } else if(
-      (
-       ending == OrangeGreenWin
-       && (battle->get_player() == Orange || battle->get_player() == Green)
-      )
-      ||
-      (
-       ending == PurpleBlueWin
-       && (battle->get_player() == Purple || battle->get_player() == Blue)
-      )
-    ) {
-      ending_str = tr("You are victorious");
-    } else {
-      ending_str = tr("You are defeated");
-    }
+    End4Player my_ending = ending[battle->get_player()];
+    static const QString ending_str[3] = {
+      tr("Tie"), tr("You are victorious"), tr("You are defeated")
+    };
     QMessageBox::information(
       this,
       tr("Message"),
-      tr("Game Over (%1)").arg(ending_str)
+      tr("Game Over (%1)").arg(ending_str[my_ending])
     );
     hub->game_over();
   });

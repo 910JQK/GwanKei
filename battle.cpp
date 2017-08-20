@@ -17,7 +17,7 @@ Battle::Battle(Player player, AI** ai, bool is_1v1, MaskMode mask_mode)
     Player player_of_ai = is_1v1? PLAYER((player+2)%4)
                                 : PLAYER((player+1+i)%4);
     ai[i]->set_player(player_of_ai);
-    connect(ai[i], &Brainless::move,
+    connect(ai[i], &AI::move,
 	    this, [this, player_of_ai](Cell from, Cell to) {
 	      QTimer::singleShot(2500, this, [this, player_of_ai, from, to]() {
 		this->desk->move(player_of_ai, from, to);
