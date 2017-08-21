@@ -231,6 +231,7 @@ void LowIQ::status_changed(Game game, Player current_player) {
   }
 #define IS_LAST_2_ROWS(cell) game.element_of(cell).is_last_two_rows()
 
+  int situation_delta = 0;
   std::vector<Cell> my_cells; // 地雷和大本營以外的棋子（所在的格子）
   std::vector<Cell> my_bombs;
   std::vector<Cell> my_engs;
@@ -260,6 +261,11 @@ void LowIQ::status_changed(Game game, Player current_player) {
 	    enemy_flags[cell.get_group()] = cell.get_id();
 	  }
 	} // my piece or known piece of enemy
+	if(IS_ENEMY(cell)) {
+	  situation_delta--;
+	} else {
+	  situation_delta++;
+	}
       } // not empty
     } // valid cell id
   } // for cell id
@@ -616,7 +622,10 @@ void LowIQ::status_changed(Game game, Player current_player) {
     } // for orient
 
     /* 【攻擊】 */
-    if(aggressive > RAND()*RAND() && my_cells.size() >= 8 + 3*(1-aggressive)) {
+    if(aggressive > pow(RAND(), 1.5)
+       && my_cells.size() >= 6 + 6*(1-aggressive)
+       && (game.get_steps() < 80 || situation_delta > 5*(1-aggressive)*RAND())
+    ) {
       std::vector<CellPair> attack_options;
       for(auto I=my_cells.begin(); I!=my_cells.end(); I++) {
 	std::list<Cell> reachables = game.reachables_of(*I);
