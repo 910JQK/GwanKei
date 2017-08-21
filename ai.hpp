@@ -38,6 +38,12 @@ public slots:
 };
 
 
+struct CellPair {
+  Cell first;
+  Cell second;
+};
+
+
 class LowIQ : public AI {
   Q_OBJECT
 private:

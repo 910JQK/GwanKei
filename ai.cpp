@@ -235,26 +235,33 @@ void LowIQ::status_changed(Game game, Player current_player) {
   std::vector<Cell> my_engs;
   Cell my_flag;
   int count[42] = {0};
+  int enemy_flags[5] = {0, 0, 0, 0, 0}; // 以 Orient 為下標，0 = invalid
   for(int i=0; i<4631; i++) {
     if(is_valid_cell_id(i)) {
       Cell cell(i);
       Element element = game.element_of(cell);
-      if(!element.is_empty() && element.get_player() == player) {
-	Piece piece = game.piece_of(element);
-	if(piece != Piece(41) && cell.get_type() != Headquarter) {
-	  my_cells.push_back(cell);
-	}
-	if(piece == Piece(31)) {
-	  my_flag = cell;
-	} else if(piece == Piece(32)) {
-	  my_engs.push_back(cell);
-	} else if(piece == Piece(0)) {
-	  my_bombs.push_back(cell);
-	}
-	count[piece.get_id()]++;
-      }
-    }
-  }
+      if(!element.is_empty()) {
+	if(element.get_player() == player) {
+	  Piece piece = game.piece_of(element);
+	  if(piece != Piece(41) && cell.get_type() != Headquarter) {
+	    my_cells.push_back(cell);
+	  }
+	  if(piece == Piece(31)) {
+	    my_flag = cell;
+	  } else if(piece == Piece(32)) {
+	    my_engs.push_back(cell);
+	  } else if(piece == Piece(0)) {
+	    my_bombs.push_back(cell);
+	  }
+	  count[piece.get_id()]++;
+	} else if(IS_ENEMY(cell) && !element.is_unknown()) {
+	  if(game.piece_of(element) == Piece(31)) {
+	    enemy_flags[cell.get_group()] = cell.get_id();
+	  }
+	} // my piece or known piece of enemy
+      } // not empty
+    } // valid cell id
+  } // for cell id
   std::sort(
     my_cells.begin(), my_cells.end(),
     [&game](const Cell& l, const Cell& r) -> bool {
@@ -384,7 +391,7 @@ void LowIQ::status_changed(Game game, Player current_player) {
       } // all reachables of bomb      
     } // all bombs
 
-    /* 【抵抗進攻】 */
+    /* 【防御】 */
     static auto bottom_first = [](const Cell& l, const Cell& r) -> bool {
       return (l.get_y() > r.get_y());
     };
@@ -464,7 +471,7 @@ void LowIQ::status_changed(Game game, Player current_player) {
 	    if(my_cells.size() >= 15+4*(1-aggressive)) {
 	      if(camp.get_y() != 3) {
 		if(p == 0) {
-		  if(aggressive < pow(RAND(), 3)*0.75) {
+		  if(aggressive < RAND()*RAND()*0.75) {
 		    OCCUPY_CAMP();
 		  }
 		} else {
@@ -486,6 +493,38 @@ void LowIQ::status_changed(Game game, Player current_player) {
 	} // for adjacents
       } // empty camp
     } // for camp at my cell group
+
+    /* 【攻擊】 */
+    if(aggressive > RAND()*RAND() && my_cells.size() > 9 + 4*(1-aggressive)) {
+      std::vector<CellPair> attack_options;
+      for(auto I=my_cells.begin(); I!=my_cells.end(); I++) {
+	std::list<Cell> reachables = game.reachables_of(*I);
+	for(auto J=reachables.begin(); J!=reachables.end(); J++) {
+	  if(NOT_EMPTY(*J) && IS_ENEMY(*J)) {
+	    int p = GET_PIECE(*I).get_id();
+	    if(p != 0 && p > least[EID(*J)]) {
+	      attack_options.push_back((CellPair){*I,*J});
+	    } // not too big to attack
+	  } // attackable
+	} // for reachables
+      } // for my cells
+      std::sort(
+	attack_options.begin(),
+	attack_options.end(),
+	[this, &game](const CellPair& l, const CellPair& r) -> bool {
+          #define ATTACK_DELTA(p) (  \
+	    GET_PIECE(p.first).get_id() - least[EID(p.second)] \
+	  )
+	  return (ATTACK_DELTA(l) < ATTACK_DELTA(r));
+	}
+      );
+      if(attack_options.size() > 0) {
+	int index = int(RAND()*attack_options.size()*0.6*(1-aggressive));
+	CellPair opt = attack_options[index];
+	emit move(opt.first, opt.second);
+	return;
+      }
+    }    
 
     /* 【胡亂走】 */
     for(int i=0; i<my_cells.size()*5; i++) {
