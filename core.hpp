@@ -92,7 +92,10 @@ namespace GwanKei {
     int get_x() const;
     LeftRight get_lr() const;    
     CellType get_type() const;
-    Cell get_above() const;
+    Cell get_top() const;
+    Cell get_bottom() const;
+    Cell get_left() const;
+    Cell get_right() const;
     std::string to_string() const;
     std::list<Bound> get_adjacents() const; // 取得鄰接的格子（道路）
     bool operator == (const Cell& right) const;

@@ -144,6 +144,8 @@ namespace GwanKei {
     void set_unknown();
     void set_known();
     int get_layout_index() const;
+    bool is_first_row() const;
+    bool is_last_two_rows() const;
     Element& operator = (const Element& right);
     static Element Unknown(Player player, int layout_index) {
       Element result(player, layout_index);

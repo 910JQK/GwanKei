@@ -222,9 +222,48 @@ namespace GwanKei {
     }
   }
 
-  Cell Cell::get_above() const {
-    // 一般用於 6 線的子
+  Cell Cell::get_top() const {
+    assert(get_group() != Central && get_y() > 1);
     return Cell(get_group(), (get_y() - 1), get_x(), get_lr());
+  }
+
+  Cell Cell::get_bottom() const {
+    assert(get_group() != Central && get_y() <= 5);
+    return Cell(get_group(), (get_y() + 1), get_x(), get_lr());
+  }
+
+  Cell Cell::get_left() const {
+    CellGroup g = get_group();
+    int y = get_y();
+    int x = get_x();
+    LeftRight lr = get_lr();
+    assert(g != Central && !(x == 1 && lr == Left));
+    if(x == 2 && lr == Right) {
+      return Cell(g, y, 3, Left);
+    } else {
+      if(lr == Left) {
+	return Cell(g, y, x-1, lr);
+      } else {
+	return Cell(g, y, x+1, lr);
+      }
+    }
+  }
+
+  Cell Cell::get_right() const {
+    CellGroup g = get_group();
+    int y = get_y();
+    int x = get_x();
+    LeftRight lr = get_lr();
+    assert(g != Central && !(x == 1 && lr == Right));
+    if(x == 3 && lr == Left) {
+      return Cell(g, y, 2, Right);
+    } else {
+      if(lr == Left) {
+	return Cell(g, y, x+1, lr);
+      } else {
+	return Cell(g, y, x-1, lr);
+      }
+    }
   }
 
   std::string Cell::to_string() const {

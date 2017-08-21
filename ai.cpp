@@ -229,6 +229,7 @@ void LowIQ::status_changed(Game game, Player current_player) {
   for(auto item=list.begin(); item!=list.end(); item++) { \
     vector.push_back(*item)				  \
   }
+#define IS_LAST_2_ROWS(cell) game.element_of(cell).is_last_two_rows()
 
   std::vector<Cell> my_cells; // 地雷和大本營以外的棋子（所在的格子）
   std::vector<Cell> my_bombs;
@@ -276,6 +277,7 @@ void LowIQ::status_changed(Game game, Player current_player) {
   MoveResult move_result = last_feedback.get_move_result();
   Cell moved = last_feedback.get_moved_cell();
   Cell target = last_feedback.get_target_cell();
+  bool is_route_turned = last_feedback.is_route_turned();
   if(IS_LAST_GAME_VALID() &&
      (move_result == Smaller || move_result == Bigger) ) {
     // 要看碰子前的資料只能靠上次的記錄，因為 killed 已經沒了
@@ -306,37 +308,28 @@ void LowIQ::status_changed(Game game, Player current_player) {
       least[killer_id] = this_time_least;
     }
   }
-  if(move_result == Nothing && last_feedback.is_route_turned()) {
-    least[EID(target)] = 1;
+  if(game.get_steps() > 0) {
+    if(move_result == Nothing && is_route_turned) {
+      least[EID(target)] = 1;
+    }
+    if(
+       move_result == Nothing
+       || move_result == Bigger
+       || (move_result == Smaller && is_route_turned)
+       ) {
+      if(IS_LAST_2_ROWS(target)) {
+	is_not_mine[EID(target)] = true;
+      }
+    }    
   }
 
   if(current_player == player) {
 
     auto try2kill_use_big = [this, &game, &my_cells](Cell target) -> bool {
       for(auto I=my_cells.begin(); I!=my_cells.end(); I++) {
+	int p = GET_PIECE(*I).get_id();
 	if(game.is_movable(*I, target)) {
-	  emit move(*I, target);
-	  return true;
-	}
-      }
-      return false;
-    };
-
-    auto try2occupy = try2kill_use_big;
-    
-    auto try2kill_use_small = [this, &game, &my_cells, &my_engs](Cell target) {
-      // 有棋可用？（從小棋開始找）
-      for(auto I=my_cells.rbegin(); I!=my_cells.rend(); I++) {
-	if(GET_PIECE(*I) != Piece(32) && game.is_movable(*I, target)) {
-	  emit move(*I, target);
-	  return true;
-	}
-      }
-      // 實在不行出動工兵試圖打對
-      int target_min = least[EID(target)];
-      if(target_min == 1 || (target_min == 0 && aggressive < 0.3*RAND() )) {
-	for(auto I=my_engs.begin(); I!=my_engs.end(); I++) {
-	  if(game.is_movable(*I, target)) {
+	  if(EMPTY(target) || (NOT_EMPTY(target) && p >= least[EID(target)])) {
 	    emit move(*I, target);
 	    return true;
 	  }
@@ -345,11 +338,45 @@ void LowIQ::status_changed(Game game, Player current_player) {
       return false;
     };
 
+    auto try2occupy = try2kill_use_big;
+
+    auto try2kill_use_eng = [this, &game, &my_engs](Cell target) -> bool {
+      for(auto I=my_engs.begin(); I!=my_engs.end(); I++) {
+	if(game.is_movable(*I, target)) {
+	  if(EMPTY(target) || (NOT_EMPTY(target) && least[EID(target)] <= 1)) {
+	    emit move(*I, target);
+	    return true;
+	  }
+	}
+      }
+      return false;
+    };
+
+    auto try2kill_use_small = [this, &game, &my_cells, try2kill_use_eng]
+      (Cell target) -> bool {
+      // 有棋可用？（從小棋開始找）
+      for(auto I=my_cells.rbegin(); I!=my_cells.rend(); I++) {
+	int p = GET_PIECE(*I).get_id();
+	if(p != 32 && game.is_movable(*I, target)) {
+	  if(EMPTY(target) || (NOT_EMPTY(target) && p > least[EID(target)]) ) {
+	    emit move(*I, target);
+	    return true;
+	  }
+	}
+      }
+      // 實在不行出動工兵試圖打對
+      int target_min = least[EID(target)];
+      if(target_min == 1 || (target_min == 0 && aggressive < 0.3*RAND() )) {
+	return try2kill_use_eng(target);
+      }
+      return false;
+    };
+
     /* 【護旗】 */
     std::list<Bound> flag_adj = my_flag.get_adjacents();
     for(auto I=flag_adj.begin(); I!=flag_adj.end(); I++) {
       Cell cell = I->get_target();
-      Cell above = cell.get_above();
+      Cell above = cell.get_top();
       if(NOT_EMPTY(cell)) {
 	if(IS_ENEMY(cell)) {
 	  // 軍旗遭到直接威脅
@@ -390,6 +417,55 @@ void LowIQ::status_changed(Game game, Player current_player) {
 	} // enemy
       } // all reachables of bomb      
     } // all bombs
+
+    /* 【扛旗】 */
+    for(int i=1; i<=4; i++) {
+      if(enemy_flags[i] != 0) {
+        #define MOVE_TO(cell) \
+	  if(aggressive > RAND()) {		\
+	    TRY(try2kill_use_small(cell));	\
+	  } else {				\
+	    TRY(try2kill_use_big(cell));	\
+	  }
+        #define TRY_TO_ATTACK(cell)  \
+	  if(NOT_EMPTY(cell)) {					\
+	    if(IS_ENEMY(cell)) {				\
+	      if(is_not_mine[EID(cell)]) {			\
+		TRY(try2kill_use_big(cell));			\
+	      } else if(least[EID(cell)] <= 35+3*aggressive) {	\
+		if(RAND() < 0.3) {				\
+		  TRY(try2kill_use_small(cell));		\
+		}						\
+	      }							\
+	    }							\
+	  } else {						\
+	    MOVE_TO(cell);					\
+	  }
+
+	Cell flag(enemy_flags[i]);
+	TRY(try2kill_use_small(flag));
+	Cell flag_top = flag.get_top();
+	TRY_TO_ATTACK(flag_top);
+	Cell near3cells[3] = {
+	  flag.get_left(), flag.get_right(), flag_top
+	};
+	Cell corner2cells[2] = {
+	  flag_top.get_left(), flag_top.get_right()
+	};
+	for(int j=0; j<3; j++) {
+	  Cell cell(near3cells[j]);
+	  TRY_TO_ATTACK(cell);
+	}
+	for(int j=0; j<2; j++) {
+	  Cell cell(corner2cells[j]);
+	  if(EMPTY(cell.get_bottom()) ) {
+	    TRY_TO_ATTACK(cell);
+	  } else if(aggressive > sqrt(RAND()) ) {
+	    TRY_TO_ATTACK(cell);
+	  }
+	}	
+      } // valid -> determined flag of enemy
+    } // for orients
 
     /* 【防御】 */
     static auto bottom_first = [](const Cell& l, const Cell& r) -> bool {
@@ -471,7 +547,7 @@ void LowIQ::status_changed(Game game, Player current_player) {
 	    if(my_cells.size() >= 15+4*(1-aggressive)) {
 	      if(camp.get_y() != 3) {
 		if(p == 0) {
-		  if(aggressive < RAND()*RAND()*0.75) {
+		  if(aggressive < RAND()*RAND()*0.85) {
 		    OCCUPY_CAMP();
 		  }
 		} else {
@@ -494,16 +570,68 @@ void LowIQ::status_changed(Game game, Player current_player) {
       } // empty camp
     } // for camp at my cell group
 
+    /* 【挖雷】 */
+    for(int i=1; i<=4; i++) {
+      if(enemy_flags[i] != 0) {
+	Cell flag(enemy_flags[i]);
+	Cell flag_top = flag.get_top();
+	Cell near3cells[3] = {
+	  flag.get_left(), flag.get_right(), flag_top
+	};
+	Cell corner2cells[2] = {
+	  flag_top.get_left(), flag_top.get_right()
+	};
+	for(int j=0; j<3; j++) {
+	  Cell cell = near3cells[j];	  
+	  if(NOT_EMPTY(cell) && IS_ENEMY(cell) && !is_not_mine[EID(cell)] ) {
+	    TRY(try2kill_use_eng(cell));
+	  }
+	}
+	for(int j=0; j<2; j++) {
+	  Cell cell = corner2cells[j];
+	  if(NOT_EMPTY(cell)) {
+	    if(IS_ENEMY(cell) && !is_not_mine[EID(cell)] ) {
+	      if(least[EID(cell)] > 35 + 2*aggressive) {
+		TRY(try2kill_use_eng(cell));
+	      }
+	    }
+	  } else {
+	    Cell bottom = cell.get_bottom();
+	    if(NOT_EMPTY(bottom)) {
+	      if(IS_ENEMY(bottom) && !is_not_mine[EID(bottom)] ) {
+		if(
+		   (aggressive > 0.5 && my_engs.size() > 2)
+		   || (aggressive > 0.85 && my_engs.size() > 1)
+		) {
+		  if(RAND() < 0.3) {
+		    // Tip: this "kill" actually means "move"
+		    TRY(try2kill_use_eng(cell));
+		  } // 30% propability
+		} // aggressive enough
+	      } // bottom may be mine
+	    } // bottom is not empty
+	  } // piece or empty
+	} // for corner2cells
+      } // valid -> this orient is enemy and flag is shown
+    } // for orient
+
     /* 【攻擊】 */
-    if(aggressive > RAND()*RAND() && my_cells.size() > 9 + 4*(1-aggressive)) {
+    if(aggressive > RAND()*RAND() && my_cells.size() >= 8 + 3*(1-aggressive)) {
       std::vector<CellPair> attack_options;
       for(auto I=my_cells.begin(); I!=my_cells.end(); I++) {
 	std::list<Cell> reachables = game.reachables_of(*I);
 	for(auto J=reachables.begin(); J!=reachables.end(); J++) {
 	  if(NOT_EMPTY(*J) && IS_ENEMY(*J)) {
+            #define ADD_OPT() attack_options.push_back((CellPair){*I,*J});
 	    int p = GET_PIECE(*I).get_id();
-	    if(p != 0 && p > least[EID(*J)]) {
-	      attack_options.push_back((CellPair){*I,*J});
+	    if(p != 0 && p != 32 && p > least[EID(*J)]) {
+	      if(IS_LAST_2_ROWS(*J) && !is_not_mine[EID(*J)]) {
+		if(p <= 34 + 5*aggressive) {
+		  ADD_OPT();
+		}
+	      } else {
+		ADD_OPT();
+	      } // could be a mine or cannot
 	    } // not too big to attack
 	  } // attackable
 	} // for reachables

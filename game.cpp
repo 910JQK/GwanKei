@@ -189,6 +189,24 @@ namespace GwanKei {
     return ((id-1)%26 - 1);
   }
 
+  bool Element::is_first_row() const {
+    if(!is_empty()) {
+      Cell cell = convert_layout_index_to_cell(get_layout_index());
+      return (cell.get_y() == 1);
+    } else {
+      return false;
+    }
+  }
+
+  bool Element::is_last_two_rows() const {
+    if(!is_empty()) {
+      Cell cell = convert_layout_index_to_cell(get_layout_index());
+      return (cell.get_y() >= 5);
+    } else {
+      return false;
+    }
+  }
+
   Element& Element::operator = (const Element& right) {
     this->id = right.id;
     return *this;
