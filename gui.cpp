@@ -2,6 +2,9 @@
 #include <QDesktopWidget>
 #include <QWebSettings>
 #include <QWebFrame>
+#include <QWebInspector>
+#include <QDialog>
+#include <QVBoxLayout>
 #include <QMessageBox>
 #include <QMenuBar>
 #include <QMenu>
@@ -26,6 +29,11 @@ Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
   QMenu* start_menu = menuBar()->addMenu(tr("&Start"));
   QMenu* bl_menu = start_menu->addMenu(tr("&Brainless AI"));
   QMenu* li_menu = start_menu->addMenu(tr("&Low-IQ AI"));
+  QMenu* debug_menu = menuBar()->addMenu(tr("&Debug"));
+
+  QAction* inspector_action = new QAction(tr("Open &Inspector"));
+  connect(inspector_action, &QAction::triggered, view, &View::open_inspector);
+  debug_menu->addAction(inspector_action);
 
   #define ADD_MENU_ITEM(menu, item, battle_type, text)	\
   QAction* item = new QAction(text); \
@@ -45,6 +53,7 @@ View::View(QWidget* parent) : QWebView(parent) {
   QWebSettings* defaultSettings = QWebSettings::globalSettings();
   defaultSettings->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
   defaultSettings->setAttribute(QWebSettings::JavascriptEnabled, true);
+  setContextMenuPolicy(Qt::NoContextMenu);
   hub = new Hub();
   connect(page()->mainFrame(), &QWebFrame::javaScriptWindowObjectCleared,
 	  this, &View::javaScriptWindowObjectCleared );
@@ -99,6 +108,24 @@ void View::init_battle() {
     );
     hub->game_over();
   });
+}
+
+
+void View::open_inspector() {
+  if(!inspector_created) {
+    inspector = new QWebInspector(this);
+    inspector->setPage(page());
+    inspector_dialog = new QDialog();
+    inspector_dialog->setLayout(new QVBoxLayout());
+    inspector_dialog->layout()->addWidget(inspector);
+    inspector_dialog->setModal(false);
+    inspector_dialog->resize(800, 360);
+    inspector_dialog->layout()->setContentsMargins(0, 0, 0, 0);
+    inspector_dialog->setWindowTitle(tr("Web Debug Toolkit"));
+  }
+  inspector_dialog->show();
+  inspector_dialog->raise();
+  inspector_dialog->activateWindow();
 }
 
 

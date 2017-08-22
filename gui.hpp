@@ -17,6 +17,8 @@ class Board;
 
 class QMenu;
 class QAction;
+class QDialog;
+class QWebInspector;
 
 class Window : public QMainWindow {
   Q_OBJECT
@@ -30,12 +32,16 @@ class View : public QWebView {
 private:
   Hub* hub;
   Battle* battle;
+  QDialog* inspector_dialog;
+  QWebInspector* inspector;
+  bool inspector_created = false;
   bool battle_created = false;
   void init_battle();
 public:
   View(QWidget* parent);
   void new_game(BattleType type);
 public slots:
+  void open_inspector();				
   void javaScriptWindowObjectCleared();
 };
 
