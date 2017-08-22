@@ -195,6 +195,7 @@ function draw_piece(player, group, y, x, lr, piece_id) {
 	var cell = coor2cell(group, y, x, lr);
 	var player_of_cell = player;
 	ev.stopPropagation();
+	hide_panel();
 	if(selected_cell != -1) {
 	    if(!empty) {
 		if(mode == 'preparing') {
@@ -234,6 +235,12 @@ function draw_piece(player, group, y, x, lr, piece_id) {
 	}
 	console.log(`CLICK ${cell}`);
     });
+    if(mode != 'preparing' && player != perspective) {
+	g_tag.addEventListener('contextmenu', function(ev) {
+	    ev.preventDefault();
+	    show_panel(ev.clientX, ev.clientY);
+	});
+    }
     return g_tag;
 }
 
@@ -441,8 +448,30 @@ function init_clocks() {
 }
 
 
+function show_panel(x, y) {
+    panel.style.left = x + 'px';
+    panel.style.top = y + 'px';
+    panel.style.display = '';
+}
+
+
+function hide_panel() {
+    panel.style.display = 'none';
+}
+
+
+function panel_clicked(ev) {
+    if(ev.target.classList.contains('panel_button')) {
+	let mark = ev.target.dataset.mark;
+	
+    }
+}
+
+
 function init() {
     document.body.addEventListener('click', cancel_select);
+    document.body.addEventListener('click', hide_panel);
+    panel.addEventListener('click', panel_clicked);
     init_clocks();
     Hub.render.connect(render);
     Hub.set_clock.connect(set_clock);
