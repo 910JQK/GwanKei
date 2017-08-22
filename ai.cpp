@@ -372,7 +372,11 @@ void LowIQ::status_changed(Game game, Player current_player) {
       }
       // 實在不行出動工兵試圖打對
       int target_min = least[EID(target)];
-      if(target_min == 1 || (target_min == 0 && aggressive < 0.3*RAND() )) {
+      if(
+	 target_min == 1
+	 || target.get_type() == Headquarter
+	 || (target_min == 0 && aggressive < 0.3*RAND())
+      ) {
 	return try2kill_use_eng(target);
       }
       return false;
