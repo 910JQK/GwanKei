@@ -30,6 +30,16 @@ bool AI::is_initialized() const {
 }
 
 
+bool AI::is_ended() const {
+  return ended;
+}
+
+
+void AI::game_over() {
+  ended = true;
+}
+
+
 Brainless::Brainless() : AI() {
 
 }
@@ -59,6 +69,7 @@ Layout Brainless::get_layout() {
 
 void Brainless::status_changed(Game game, Player current_player) {
   assert(is_initialized());
+  if(is_ended()) return;
   Player player = get_player();
   if(current_player == player) {
     std::list<Cell> my_cells;
@@ -199,6 +210,7 @@ Layout LowIQ::get_layout() {
 void LowIQ::status_changed(Game game, Player current_player) {
 
   assert(is_initialized());
+  if(is_ended()) return;
   Player player = get_player();
 
 // 取得棋子大小
@@ -374,7 +386,7 @@ void LowIQ::status_changed(Game game, Player current_player) {
       int target_min = least[EID(target)];
       if(
 	 target_min == 1
-	 || target.get_type() == Headquarter
+	 || (NOT_EMPTY(target) && target.get_type() == Headquarter)
 	 || (target_min == 0 && aggressive < 0.3*RAND())
       ) {
 	return try2kill_use_eng(target);
@@ -391,7 +403,7 @@ void LowIQ::status_changed(Game game, Player current_player) {
 	if(IS_ENEMY(cell)) {
 	  // 軍旗遭到直接威脅
 	  TRY(try2kill_use_big(cell));
-	} else if(GET_PIECE(cell) == Piece(41)) {
+	} else if(IS_MYSELF(cell) && GET_PIECE(cell) == Piece(41)) {
 	  // 疑似工兵尋破綻
 	  if(above.get_type() != Camp && NOT_EMPTY(above) && IS_ENEMY(above)) {
 	    if(least[EID(above)] == 0 || least[EID(above)] == 1) {
@@ -455,7 +467,6 @@ void LowIQ::status_changed(Game game, Player current_player) {
 	Cell flag(enemy_flags[i]);
 	TRY(try2kill_use_small(flag));
 	Cell flag_top = flag.get_top();
-	TRY_TO_ATTACK(flag_top);
 	Cell near3cells[3] = {
 	  flag.get_left(), flag.get_right(), flag_top
 	};
@@ -626,9 +637,12 @@ void LowIQ::status_changed(Game game, Player current_player) {
     } // for orient
 
     /* 【攻擊】 */
-    if(aggressive > pow(RAND(), 1.5)
-       && my_cells.size() >= 6 + 6*(1-aggressive)
-       && (game.get_steps() < 80 || situation_delta > 5*(1-aggressive)*RAND())
+    if((
+	aggressive > RAND()*RAND()
+	&& my_cells.size() >= 6 + 6*(1-aggressive)
+	)
+       || (situation_delta > 5*(1-aggressive)*RAND())
+       || (situation_delta > 0 && RAND() < 0.1 + 0.2*aggressive)
     ) {
       std::vector<CellPair> attack_options;
       for(auto I=my_cells.begin(); I!=my_cells.end(); I++) {

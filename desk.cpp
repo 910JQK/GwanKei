@@ -135,7 +135,11 @@ void Desk::try_to_start() {
 
 
 bool Desk::check_ending() {
-  #define END() emit end(ending); return true;
+  #define END() \
+    emit end(ending); \
+    ended = true; \
+    return true;
+
   Ending ending = {Tie, Tie, Tie, Tie};
   if(is_1v1) {
     for(int i=0; i<4; i++) {
@@ -210,8 +214,13 @@ void Desk::move(Player player, Cell from, Cell to) {
       "(" << from.to_string() << ")" << " -> " <<
       "(" << to.to_string() << ")"
   );
-  if(started && player == current_player && game->is_movable(from, to)
-     && game->element_of(from).get_player() == player) {
+  if(
+     started
+     && !ended
+     && player == current_player
+     && game->is_movable(from, to)
+     && game->element_of(from).get_player() == player
+  ) {
     Element to_element = game->element_of(to);
     bool is_to_flag = false;
     if(!to_element.is_empty() && game->piece_of(to_element).get_id() == 31) {

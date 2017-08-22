@@ -14,15 +14,18 @@ class AI : public QObject {
 private:
   Player player;
   bool initialized = false;
+  bool ended = false; // game over -> true
 public:
   AI();
   Player get_player() const;
   void set_player(Player player);
   bool is_initialized() const;
+  bool is_ended() const;
   virtual Layout get_layout() = 0;
 signals:
   void move(Cell from, Cell to);
 public slots:
+  void game_over();
   virtual void status_changed(Game game, Player current_player) = 0;
 };
 

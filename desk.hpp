@@ -35,6 +35,7 @@ private:
   Game* game;
   QTimer* timer;
   bool started = false;
+  bool ended = false;
   Layout layouts[4];
   bool ready_state[4] = {0};
   bool failed[4] = {0};
