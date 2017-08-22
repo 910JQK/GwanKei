@@ -521,14 +521,16 @@ void LowIQ::status_changed(Game game, Player current_player) {
       std::list<Cell> list = game.reachables_of(invader);
       std::vector<Cell> reachables;
       for(auto J=list.begin(); J!=list.end(); J++) {
-	if(NOT_EMPTY(*J) && IS_MYSELF(*J) && GET_PIECE(*J) != Piece(0)) {
-	  reachables.push_back(*J);
-	}
+	reachables.push_back(*J);
       }
       for(int j=0; j<reachables.size()*3; j++) {
 	Cell neighbor = reachables[qrand() % reachables.size()];
         #define TRY_TO_RESIST() emit move(neighbor, invader); return;
-	if(NOT_EMPTY(neighbor) && IS_MYSELF(neighbor)) {
+	if(NOT_EMPTY(neighbor)
+	   && IS_MYSELF(neighbor)
+	   && GET_PIECE(neighbor) != Piece(0)
+	   && GET_PIECE(neighbor) != Piece(41)
+	) {
 	  int p = GET_PIECE(neighbor).get_id();
 	  if(p > min) {
 	    if((p - min) > 3*(1-aggressive)) {
@@ -568,6 +570,9 @@ void LowIQ::status_changed(Game game, Player current_player) {
           #define OCCUPY_CAMP() emit move(neighbor, camp); return;
 	  if(NOT_EMPTY(neighbor) && IS_MYSELF(neighbor)) {
 	    int p = GET_PIECE(neighbor).get_id();
+	    if(p == 41) {
+	      continue;
+	    }
 	    if(my_cells.size() >= 12+4*(1-aggressive)) {
 	      if(camp.get_y() != 3) {
 		if(p == 0) {
