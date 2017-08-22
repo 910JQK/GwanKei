@@ -21,6 +21,18 @@
       }
       #board { border: 2px solid black; }      
       text { -webkit-user-select: none; }
+      .piece { cursor: default; }
+      .piece.selectable { cursor: pointer; }
+      .placeholder.reachable, .piece.reachable { cursor: pointer; }
+      .placeholder.reachable > rect {
+          stroke: hsla(0, 0%, 0%, 0.3);
+          fill: hsla(50, 95%, 50%, 0.3);
+      }
+      .piece.reachable > rect {
+          stroke: hsl(0, 100%, 45%);
+          stroke-width: 0.75;
+          opacity: 0.5;
+      }
       .piece.selected > rect { stroke: red; fill: hsla(30, 90%, 50%, 0.3); }
       .piece.selected > text { fill: black; }
       .button { cursor: pointer; }

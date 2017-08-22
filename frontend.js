@@ -136,13 +136,10 @@ function draw_piece(player, group, y, x, lr, piece_id, eid) {
     var empty = false;
     if(piece_id == -1)
 	empty = true;
-    let cursor = 'default';
-    if(mode == 'preparing' && player == perspective)
-	cursor = 'pointer';
-    else if(mode == 'playing' && player == perspective)
-	cursor = 'pointer';
-    else
-	cursor = 'default';
+    let selectable = (
+	(mode == 'playing' || mode == 'preparing')
+	    && player == perspective
+    );
     var rect_tag = create_tag(
 	'rect',
 	{
@@ -186,15 +183,16 @@ function draw_piece(player, group, y, x, lr, piece_id, eid) {
 	'g',
 	{
 	    transform: `translate(${coor.x},${coor.y}) ${PIECE_TRANSFORM[get_relative_group(group)]} translate(${-coor.x},${-coor.y})`
-	},
-	{
-	    cursor: cursor
 	}
     );
-    if(!empty)
+    if(!empty) {
 	g_tag.classList.add('piece');
-    else
+    } else {
 	g_tag.classList.add('placeholder');
+    }
+    if(selectable) {
+	g_tag.classList.add('selectable');
+    }
     g_tag.appendChild(rect_tag);
     g_tag.appendChild(text_tag);
     pieces.appendChild(g_tag);
@@ -303,13 +301,15 @@ function update_cursor() {
 	if(selected_cell != -1) {
 	    for(let I of Object.keys(cell_data)) {
 		if(Hub.is_movable(selected_cell, I)) {
-		    cell_data[I].svg_tag.style.cursor = 'pointer';
+		    cell_data[I].svg_tag.classList.add('reachable');
 		} // is movable
 	    } // for cell
 	} else {
 	    for(let I of Object.keys(cell_data)) {
 		if(cell_data[I].player != perspective) {
-		    cell_data[I].svg_tag.style.cursor = 'default';
+		    if(cell_data[I].svg_tag.classList.contains('reachable')) {
+			cell_data[I].svg_tag.classList.remove('reachable');
+		    }
 		}
 	    }
 	} // selected ?
