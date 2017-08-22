@@ -40,7 +40,14 @@ Battle::Battle(Player player, AI** ai, bool is_1v1, MaskMode mask_mode)
 
 
 Battle::~Battle() {
-  delete desk;
+  int n_of_ai = desk->is_1v1_desk()? 1: 3;
+  for(int i=0; i<n_of_ai; i++) {
+    ai[i]->disconnect();
+    ai[i]->deleteLater();
+  }
+  delete[] ai;
+  desk->disconnect();
+  desk->deleteLater();
 }
 
 

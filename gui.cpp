@@ -9,6 +9,7 @@
 #include <QDir>
 #include <QUrl>
 #include <QTimer>
+#include <QDebug>
 #include "gui.hpp"
 
 
@@ -55,7 +56,10 @@ View::View(QWidget* parent) : QWebView(parent) {
 
 void View::new_game(BattleType type) {
   if(battle_created) {
-    delete battle;
+    disconnect(hub, &Hub::ready, 0, 0);
+    disconnect(hub, &Hub::move, 0, 0);
+    battle->disconnect();
+    battle->deleteLater();
   }
   battle = Battle::Create(type);
   battle_created = true;
@@ -68,7 +72,7 @@ void View::init_battle() {
   connect(hub, &Hub::ready, battle, &Battle::ready);
   connect(hub, &Hub::move, battle, &Battle::move);
   connect(battle, &Battle::status_changed, hub, &Hub::status_changed);
-  connect(battle, &Battle::fail, this, [this](Player who, FailReason reason) {
+  connect(battle, &Battle::fail, this, [this] (Player who, FailReason reason) {
     const QString reason_str[4] = {
       tr("flag was captured"),
       tr("has no living piece"),
@@ -164,6 +168,11 @@ void Hub::submit_move(int from, int to) {
 
 void Hub::game_over() {
   ended = true;
+}
+
+
+void Hub::debug(QString str) const {
+  qDebug() << str << "\n";
 }
 
 

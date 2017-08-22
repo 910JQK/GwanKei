@@ -33,13 +33,13 @@ class Desk : public QObject {
   Q_OBJECT
 private:
   Game* game;
+  QTimer* timer;
   bool started = false;
   Layout layouts[4];
   bool ready_state[4] = {0};
   bool failed[4] = {0};
   QString players[4] = {"", "","",""};
   Player current_player;
-  QTimer timer;
   MaskMode mask_mode;
   bool is_1v1;
   int step_count = 0;
@@ -55,6 +55,7 @@ public:
   QStringList get_players() const;
   QList<bool> get_ready_state() const;
   bool is_player_available(Player player) const;
+  bool is_1v1_desk() const;
 signals:
   void players_changed(QStringList players);
   void ready_state_changed(QList<bool> ready_state);

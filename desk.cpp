@@ -2,16 +2,21 @@
 #include "desk.hpp"
 
 
+#include <QDebug>
+
+
 Desk::Desk(MaskMode mask_mode, bool is_1v1) : QObject() {
+  timer = new QTimer(this);
   this->mask_mode = mask_mode;
   this->is_1v1 = is_1v1;
-  timer.setSingleShot(true);
-  timer.setInterval(WAITING_TIME*1000);
-  connect(&timer, &QTimer::timeout, this, &Desk::timeout);
+  timer->setSingleShot(true);
+  timer->setInterval(WAITING_TIME*1000);
+  connect(timer, &QTimer::timeout, this, &Desk::timeout);
 }
 
 
 Desk::~Desk() {
+  timer->disconnect();
   if(started) {
     delete game;
   }
@@ -44,8 +49,14 @@ bool Desk::is_player_available(Player player) const {
 }
 
 
-void Desk::change_status(int single_player /* = -1 */) {
+bool Desk::is_1v1_desk() const {
+  return is_1v1;
+}
+
+
+void Desk::change_status(int single_player /* = -1 */) {  
   assert(started);
+  qDebug() << "[" << this << "]" << "Call Desk::change_status()" << "\n";
   for(int i=0; i<4; i++) {
     if(single_player != -1 && single_player != i) {
       continue;
@@ -58,18 +69,22 @@ void Desk::change_status(int single_player /* = -1 */) {
 	player,
 	game->get_game_with_mask(player, mask_mode),
 	current_player,
-	timer.remainingTime()/1000
+	timer->remainingTime()/1000
     );
+    qDebug() << "[" << this << "]" << "Emitted Desk::status_changed()" << "\n";
   }
 }
 
 
 void Desk::next_turn() {
-  timer.stop();
+  qDebug() << "[" << this << "]" << "Call Desk::next_turn()" << "\n";
+  timer->stop();
+  qDebug() << "[" << this << "]" << "Stop Timer" << "\n";
   do {
     if(check_ending())
       return;
     current_player = static_cast<Player>((current_player+1)%4);
+    qDebug() << "[" << this << "]" << "Try player " << current_player << "\n";
   } while(failed[current_player] || !ready_state[current_player]);
   if(!game->has_living_piece(current_player)) {
     game->annihilate(current_player);
@@ -78,14 +93,16 @@ void Desk::next_turn() {
     next_turn();
     return;
   }
-  timer.start();
+  timer->start();
 }
 
 
 void Desk::try_to_start() {
   if(started)
     return;
-  static auto start = [this]{
+  qDebug() << "[" << this << "]" << "Call Desk::try_to_start()" << "\n";
+  auto start = [this]{
+    qDebug() << "[" << this << "]" << "Call lambda start()" << "\n";
     started = true;
     current_player = Blue; // next = Orange
     next_turn();
@@ -113,6 +130,7 @@ void Desk::try_to_start() {
 
 
 bool Desk::check_ending() {
+  qDebug() << "[" << this << "]" << "Call Desk::check_ending()" << "\n";
   #define END() emit end(ending); return true;
   Ending ending = {Tie, Tie, Tie, Tie};
   if(is_1v1) {

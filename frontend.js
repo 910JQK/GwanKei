@@ -327,7 +327,7 @@ function render(board) {
 	   "layout_index": integer, layout index (0..24)
                -1 -> not an ordinary piece, no layout index
        }
-     */
+    */
     console.log('render');
     cls();
     mode = board.mode;
@@ -362,7 +362,7 @@ function render(board) {
 
 
 function cls_clocks() {
-    var clocks = board.querySelectorAll('.clock');
+    var clocks = document.querySelectorAll('.clock');
     for(let clock of clocks) {
 	clock.style.display = 'none';
     }
@@ -378,7 +378,7 @@ function set_clock(seconds) {
     }
     var current = Hub.get_current_player();
     var clock_index = (current-perspective+4) % 4;
-    var clocks = board.querySelectorAll('.clock');
+    var clocks = document.querySelectorAll('.clock');
     cls_clocks();
     clocks[clock_index].style.display = '';
     clocks[clock_index]
@@ -436,7 +436,7 @@ function init_clocks() {
 	pos.x = pos.y;
 	pos.y = -t;
 
-	clocks.appendChild(g_tag);
+	clock_container.appendChild(g_tag);
     }
 }
 

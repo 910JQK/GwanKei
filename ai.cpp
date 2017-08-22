@@ -503,14 +503,14 @@ void LowIQ::status_changed(Game game, Player current_player) {
       std::list<Cell> list = game.reachables_of(invader);
       std::vector<Cell> reachables;
       for(auto J=list.begin(); J!=list.end(); J++) {
-	if(IS_MYSELF(*J) && GET_PIECE(*J) != Piece(0)) {
+	if(NOT_EMPTY(*J) && IS_MYSELF(*J) && GET_PIECE(*J) != Piece(0)) {
 	  reachables.push_back(*J);
 	}
       }
       for(int j=0; j<reachables.size()*3; j++) {
 	Cell neighbor = reachables[qrand() % reachables.size()];
         #define TRY_TO_RESIST() emit move(neighbor, invader); return;
-	if(IS_MYSELF(neighbor)) {
+	if(NOT_EMPTY(neighbor) && IS_MYSELF(neighbor)) {
 	  int p = GET_PIECE(neighbor).get_id();
 	  if(p > min) {
 	    if((p - min) > 3*(1-aggressive)) {

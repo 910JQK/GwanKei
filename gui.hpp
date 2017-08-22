@@ -72,6 +72,7 @@ public:
   Q_INVOKABLE int get_current_player() const;
   Q_INVOKABLE void submit_ready();
   Q_INVOKABLE void submit_move(int from, int to);
+  Q_INVOKABLE void debug(QString str) const;
   // Q_INVOKABLE void submit_update_request();
 signals:
   /* -- Signals Emitted from Frontend -- */
