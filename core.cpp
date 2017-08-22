@@ -2,11 +2,6 @@
 #include "core.hpp"
 
 
-#ifdef DEBUG
-#include <iostream>
-#endif
-
-
 namespace GwanKei {
 
   /**
@@ -801,13 +796,6 @@ namespace GwanKei {
     std::queue<SearchNode> queue;
     bool visited[4631] = {0}; // 格子是否走過[格子ID] = {沒走過};
 
-    #ifdef DEBUG
-    std::cerr << "Search a topological-shortest route for "
-	      << from.to_string() << " -> " << to.to_string()
-	      << " with a piece "<< (able_to_turn? "able": "unable")
-	      << " to turn" << '\n';
-    #endif
-
     /* 哨位節點入列 */
     std::list<Cell> initial_route;
     initial_route.push_back(from);
@@ -818,10 +806,6 @@ namespace GwanKei {
       /* 前方出列 */
       SearchNode node = queue.front();
       queue.pop();
-
-      #ifdef DEBUG
-      std::cerr << "Shift " << node.bound.get_target().to_string() << '\n';
-      #endif
 
       /* 取得與當前格子鄰接的格子，嘗試繼續走 */
       std::list<Bound> new_bounds = node.bound.get_target().get_adjacents();
@@ -841,34 +825,14 @@ namespace GwanKei {
 
 	  /* 已走到目的地？ */
 	  if(new_bound.get_target() == to) {
-
-	    #ifdef DEBUG
-	    bool first = true;	    
-	    for(auto I=route.begin(); I!=route.end(); I++) {
-	      if(!first)
-		std::cerr << " -> ";
-	      std::cerr << I->to_string();
-	      first = false;
-	    }
-	    std::cerr << '\n';
-	    #endif
-
 	    return route; // 返回算出的路線
 	  }
 
 	  queue.push(SearchNode(new_bound, route)); // 新節點入列
 	  visited[new_bound.get_target().get_id()] = true; // 入列則算走過
-
-	  #ifdef DEBUG
-	  std::cerr << "Push " << new_bound.get_target().to_string() << '\n';
-	  #endif
 	} // if
       } // for
     } // while not empty
-
-    #ifdef DEBUG
-    std::cerr << "No route found" << '\n';
-    #endif
 
     return std::list<Cell>(); // 不通，返回空列表
   }

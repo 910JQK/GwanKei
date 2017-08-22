@@ -2,10 +2,16 @@
 #include "desk.hpp"
 
 
-#include <QDebug>
+#ifdef DEBUG
+#include <iostream>
+#define DBG(text) std::cerr << "[Debug] [" << this << "] " << text << "\n";
+#else
+#define DBG(text)
+#endif
 
 
 Desk::Desk(MaskMode mask_mode, bool is_1v1) : QObject() {
+  DBG("Desk Instance Created");
   timer = new QTimer(this);
   this->mask_mode = mask_mode;
   this->is_1v1 = is_1v1;
@@ -16,6 +22,7 @@ Desk::Desk(MaskMode mask_mode, bool is_1v1) : QObject() {
 
 
 Desk::~Desk() {
+  DBG("Delete Desk Instance");
   timer->disconnect();
   if(started) {
     delete game;
@@ -56,7 +63,7 @@ bool Desk::is_1v1_desk() const {
 
 void Desk::change_status(int single_player /* = -1 */) {  
   assert(started);
-  qDebug() << "[" << this << "]" << "Call Desk::change_status()" << "\n";
+  DBG("Call Desk::change_status()");
   for(int i=0; i<4; i++) {
     if(single_player != -1 && single_player != i) {
       continue;
@@ -71,20 +78,18 @@ void Desk::change_status(int single_player /* = -1 */) {
 	current_player,
 	timer->remainingTime()/1000
     );
-    qDebug() << "[" << this << "]" << "Emitted Desk::status_changed()" << "\n";
   }
 }
 
 
 void Desk::next_turn() {
-  qDebug() << "[" << this << "]" << "Call Desk::next_turn()" << "\n";
+  DBG("Call Desk::next_turn()");
   timer->stop();
-  qDebug() << "[" << this << "]" << "Stop Timer" << "\n";
   do {
     if(check_ending())
       return;
     current_player = static_cast<Player>((current_player+1)%4);
-    qDebug() << "[" << this << "]" << "Try player " << current_player << "\n";
+    DBG("Try player " << current_player);
   } while(failed[current_player] || !ready_state[current_player]);
   if(!game->has_living_piece(current_player)) {
     game->annihilate(current_player);
@@ -100,9 +105,9 @@ void Desk::next_turn() {
 void Desk::try_to_start() {
   if(started)
     return;
-  qDebug() << "[" << this << "]" << "Call Desk::try_to_start()" << "\n";
+  DBG("Call Desk::try_to_start()");
   auto start = [this]{
-    qDebug() << "[" << this << "]" << "Call lambda start()" << "\n";
+    DBG("Call lambda start()");
     started = true;
     current_player = Blue; // next = Orange
     next_turn();
@@ -130,7 +135,6 @@ void Desk::try_to_start() {
 
 
 bool Desk::check_ending() {
-  qDebug() << "[" << this << "]" << "Call Desk::check_ending()" << "\n";
   #define END() emit end(ending); return true;
   Ending ending = {Tie, Tie, Tie, Tie};
   if(is_1v1) {
@@ -201,6 +205,11 @@ void Desk::ready(Player player, Layout layout) {
 
 
 void Desk::move(Player player, Cell from, Cell to) {
+  DBG(
+      "Call Desk::move() [" << player << "]" << " " <<
+      "(" << from.to_string() << ")" << " -> " <<
+      "(" << to.to_string() << ")"
+  );
   if(started && player == current_player && game->is_movable(from, to)
      && game->element_of(from).get_player() == player) {
     Element to_element = game->element_of(to);
