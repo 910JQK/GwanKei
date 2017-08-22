@@ -31,6 +31,10 @@
           background-color: hsla(0, 0%, 100%, 0.8);
           font-family: sans-serif;
           font-size: 1em;
+          text-align: center;
+      }
+      #panel td {
+          cursor: pointer;
       }
     </style>
   </head>
@@ -73,29 +77,34 @@
       <div id="panel" style="display:none;">
 	<table>
 	  <tr>
-	    <td class="panel_button">７</td>
-	    <td class="panel_button">８</td>
-	    <td class="panel_button">９</td>
-	    <td class="panel_button">大</td>
+	    <td class="mark_button">７</td>
+	    <td class="mark_button">８</td>
+	    <td class="mark_button">９</td>
+	    <td class="mark_button">大</td>
 	  </tr>
 	  <tr>
-	    <td class="panel_button">４</td>
-	    <td class="panel_button">５</td>
-	    <td class="panel_button">６</td>
-	    <td class="panel_button">小</td>
+	    <td class="mark_button">４</td>
+	    <td class="mark_button">５</td>
+	    <td class="mark_button">６</td>
+	    <td class="mark_button">小</td>
 	  </tr>
 	  <tr>
-	    <td class="panel_button">１</td>
-	    <td class="panel_button">２</td>
-	    <td class="panel_button">３</td>
-	    <td class="panel_button">兵</td>
+	    <td class="mark_button">１</td>
+	    <td class="mark_button">２</td>
+	    <td class="mark_button">３</td>
+	    <td class="mark_button">兵</td>
 	  </tr>
 	  <tr>
-	    <td class="panel_button">０</td>
-	    <td class="panel_button">？</td>
-	    <td class="panel_button">！</td>
-	    <td class="panel_button">雷</td>
-	  </tr>	     
+	    <td class="mark_button">０</td>
+	    <td class="mark_button">？</td>
+	    <td class="mark_button">！</td>
+	    <td class="mark_button">雷</td>
+	  </tr>
+	  <tr>
+	    <td class="clear_button" colspan="4">
+	      Clear
+	    </td>
+	  </tr>
 	</table>
       </div>	
     </div>

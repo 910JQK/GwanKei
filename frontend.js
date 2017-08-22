@@ -26,6 +26,8 @@ const PIECE_TEXT = [
 var timer;
 var route = [];
 var cell_data = {};
+var cell_of = {}; // subscript: EID
+var piece_mark = {};
 var mode = 'preparing';
 var perspective = 0;
 var selected_cell = -1;
@@ -129,7 +131,7 @@ function cls() {
 }
 
 
-function draw_piece(player, group, y, x, lr, piece_id) {
+function draw_piece(player, group, y, x, lr, piece_id, eid) {
     var coor = get_rendering_coor(group, y, x, lr);
     var empty = false;
     if(piece_id == -1)
@@ -171,10 +173,15 @@ function draw_piece(player, group, y, x, lr, piece_id) {
 	    cursor: 'inherit'
 	}
     );
-    if(!empty)
-	text_tag.textContent = PIECE_TEXT[piece_id];
-    else
+    if(!empty) {
+	if(piece_mark[eid]) {
+	    text_tag.textContent = piece_mark[eid];
+	} else {
+	    text_tag.textContent = PIECE_TEXT[piece_id];
+	}
+    } else {
 	text_tag.textContent = '';
+    }
     var g_tag = create_tag(
 	'g',
 	{
@@ -235,10 +242,11 @@ function draw_piece(player, group, y, x, lr, piece_id) {
 	}
 	console.log(`CLICK ${cell}`);
     });
-    if(mode != 'preparing' && player != perspective) {
+    if(mode != 'preparing' && piece_id == 42) {
 	g_tag.addEventListener('contextmenu', function(ev) {
 	    ev.preventDefault();
 	    show_panel(ev.clientX, ev.clientY);
+	    panel.bound_eid = eid;
 	});
     }
     return g_tag;
@@ -339,23 +347,30 @@ function render(board) {
     cls();
     mode = board.mode;
     cell_data = {};
+    cell_of = {};
     perspective = board.perspective;
     route = [];
+    if(mode == 'preparing') {
+	piece_mark = {};
+    }
     for(let i=0; i<board.length; i++) {
 	let element = board.at(i);
+	let eid = element.player*26 + element.layout_index;
 	if(element.piece == 43) {
 	    route.push(element);
 	} else if(element) {
 	    let c = cell2coor(element.cell);
 	    let tag = draw_piece(
-		element.player, c.group, c.y, c.x, c.lr, element.piece
+		element.player, c.group, c.y, c.x, c.lr, element.piece, eid
 	    );
 	    cell_data[element.cell] = {
 		type: (element.piece != -1)? 'piece': 'empty',
 		player: element.player,
 		layout_index: element.layout_index,
+		eid: eid,
 		svg_tag: tag
 	    };
+	    cell_of[eid] = element.cell;
 	}
     }
     draw_route(route);
@@ -461,9 +476,16 @@ function hide_panel() {
 
 
 function panel_clicked(ev) {
-    if(ev.target.classList.contains('panel_button')) {
-	let mark = ev.target.dataset.mark;
-	
+    console.log(ev.target);
+    var eid = this.bound_eid;
+    var g_tag = cell_data[cell_of[eid]].svg_tag;
+    if(ev.target.classList.contains('mark_button')) {
+	let mark = ev.target.textContent;
+	piece_mark[eid] = mark;
+	g_tag.querySelector('text').textContent = mark;
+    } else if(ev.target.classList.contains('clear_button')) {
+	delete piece_mark[eid];
+	g_tag.querySelector('text').textContent = '';	
     }
 }
 
