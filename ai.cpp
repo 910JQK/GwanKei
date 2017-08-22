@@ -79,9 +79,9 @@ void Brainless::status_changed(Game game, Player current_player) {
 	Element element = game.element_of(cell);
 	if(!element.is_empty() && element.get_player() == player) {
 	  my_cells.push_back(cell);
-	}
-      }
-    }
+	} // my cell
+      } // valid cell id
+    } // for cell id
     for(int i=0; i<4631; i++) {
       if(is_valid_cell_id(i)) {
 	Cell cell(i);
@@ -502,6 +502,9 @@ void LowIQ::status_changed(Game game, Player current_player) {
     std::sort(invaders.begin(), invaders.end(), bottom_first);
     for(auto I=invaders.begin(); I!=invaders.end(); I++) {
       Cell invader = *I;
+      if(invader.get_type() == Headquarter) {
+	continue;
+      }
       std::list<Bound> adj = invader.get_adjacents();
       std::vector<Cell> adj_camps;
       for(auto J=adj.begin(); J!=adj.end(); J++) {
@@ -565,7 +568,7 @@ void LowIQ::status_changed(Game game, Player current_player) {
           #define OCCUPY_CAMP() emit move(neighbor, camp); return;
 	  if(NOT_EMPTY(neighbor) && IS_MYSELF(neighbor)) {
 	    int p = GET_PIECE(neighbor).get_id();
-	    if(my_cells.size() >= 15+4*(1-aggressive)) {
+	    if(my_cells.size() >= 12+4*(1-aggressive)) {
 	      if(camp.get_y() != 3) {
 		if(p == 0) {
 		  if(aggressive < RAND()*RAND()*0.85) {
@@ -639,7 +642,7 @@ void LowIQ::status_changed(Game game, Player current_player) {
     /* 【攻擊】 */
     if((
 	aggressive > RAND()*RAND()
-	&& my_cells.size() >= 6 + 6*(1-aggressive)
+	&& my_cells.size() >= 3 + 6*(1-aggressive)
 	)
        || (situation_delta > 5*(1-aggressive)*RAND())
        || (situation_delta > 0 && RAND() < 0.1 + 0.2*aggressive)
@@ -685,7 +688,7 @@ void LowIQ::status_changed(Game game, Player current_player) {
     for(int i=0; i<my_cells.size()*5; i++) {
       Cell selected_cell = my_cells[qrand() % my_cells.size()];
       if(selected_cell.get_group() != Central && selected_cell.get_y() >= 5) {
-	if(my_cells.size() >= 15 + 4*aggressive) {
+	if(my_cells.size() >= 12 + 4*aggressive) {
 	  continue;
 	}
       }
