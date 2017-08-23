@@ -29,6 +29,7 @@ private:
   QMap<QString, QString> sound_themes_title;
   QString sound_theme = "";
   void load_sound();
+  QDialog* about_dialog;
 public:  
   View* view;
   Window(QApplication* app, QWidget* parent = nullptr);

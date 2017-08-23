@@ -1,22 +1,25 @@
-#include <QApplication>
+#include <QDesktopServices>
 #include <QDesktopWidget>
-#include <QWebSettings>
-#include <QWebFrame>
+#include <QJsonDocument>
 #include <QWebInspector>
-#include <QDialog>
-#include <QVBoxLayout>
+#include <QApplication>
+#include <QSoundEffect>
+#include <QWebSettings>
+#include <QJsonObject>
 #include <QMessageBox>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QWebFrame>
 #include <QMenuBar>
-#include <QMenu>
 #include <QAction>
+#include <QDialog>
+#include <QDebug>
+#include <QLabel>
+#include <QTimer>
+#include <QFile>
+#include <QMenu>
 #include <QDir>
 #include <QUrl>
-#include <QFile>
-#include <QTimer>
-#include <QSoundEffect>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QDebug>
 #include "gui.hpp"
 
 
@@ -38,6 +41,7 @@ Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
   QMenu* li_menu = start_menu->addMenu(tr("&Low-IQ AI"));
   QMenu* sound_menu = menuBar()->addMenu(tr("&Sound"));
   QMenu* debug_menu = menuBar()->addMenu(tr("&Debug"));
+  QMenu* help_menu = menuBar()->addMenu(tr("&Help"));
 
   load_sound();
   QActionGroup* sound_options = new QActionGroup(this);
@@ -61,6 +65,35 @@ Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
   QAction* inspector_action = new QAction(tr("Open &Inspector"), this);
   connect(inspector_action, &QAction::triggered, view, &View::open_inspector);
   debug_menu->addAction(inspector_action);
+
+  QAction* about_action = new QAction(tr("&About"), this);
+  QLabel* about_label = new QLabel(about_dialog);
+  about_label->setText(tr("<h2>GwanKei</h2><h4>Open Source Junqi Implementation</h4><p>This is an implementation of the Chinese board game Junqi which is licenced under LGPL.</p><p>If you know nothing about this game, please search about Junqi or Luzhanqi on Wikipedia.</p><p>All the source code is available at <a href='github'>https://github.com/910JQK/GwanKei</a>.</p>"));
+  about_label->setAlignment(Qt::AlignCenter);
+  connect(about_label, &QLabel::linkActivated, this, [](QString href) {
+      if(href == "github") {
+	QDesktopServices::openUrl(QUrl("https://github.com/910JQK/GwanKei"));
+      }
+  });
+  QPushButton* ok_btn = new QPushButton(tr("OK, I knew it."), about_dialog);  
+  about_dialog = new QDialog();
+  QVBoxLayout* about_dialog_layout = new QVBoxLayout(about_dialog);
+  about_dialog_layout->addWidget(about_label);
+  about_dialog_layout->addWidget(ok_btn, 0, Qt::AlignCenter);
+  about_dialog->setLayout(about_dialog_layout);
+  about_dialog->layout()->setSpacing(30);
+  ok_btn->setMaximumWidth(
+    ok_btn->fontMetrics().boundingRect(ok_btn->text()).width() + 20
+  );
+  about_dialog->setModal(false);
+  about_dialog->setWindowTitle("About this program");
+  connect(about_action, &QAction::triggered, this, [this]() {
+    about_dialog->show();
+    about_dialog->raise();
+    about_dialog->activateWindow();
+  });
+  connect(ok_btn, &QPushButton::clicked, about_dialog, &QDialog::close);
+  help_menu->addAction(about_action);
 
   #define ADD_MENU_ITEM(menu, item, battle_type, text)	\
     QAction* item = new QAction(text, this);		\
