@@ -3,7 +3,7 @@
     "files": {
 	"start": "Begin.wav",
 	"end": "dead.wav",
-	"select": "select.wav",
+	"select": "Select.wav",
 	"move": "move.wav",
 	"bigger": "eat.wav",
 	"smaller": "killed.wav",

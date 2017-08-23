@@ -6,8 +6,7 @@
 #include <QList>
 #include <QString>
 #include <QMap>
-#include <QVariantMap>
-#include <QJsonObject>
+#include <QVariant>
 #include "battle.hpp"
 
 using namespace GwanKei;
@@ -21,11 +20,12 @@ class QMenu;
 class QAction;
 class QDialog;
 class QWebInspector;
+class QSoundEffect;
 
 class Window : public QMainWindow {
   Q_OBJECT
 private:
-  QMap<QString, QJsonObject> sound_files;
+  QMap<QString, QMap<QString, QSoundEffect*>> sounds_of_theme;
   QMap<QString, QString> sound_themes_title;
   QString sound_theme = "";
   void load_sound();

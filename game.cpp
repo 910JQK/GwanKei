@@ -279,6 +279,7 @@ namespace GwanKei {
   Feedback& Feedback::operator = (const Feedback& right) {
     this->move_result = right.move_result;
     this->route = right.route;
+    this->show_flag = right.show_flag;
     return *this;
   }
 

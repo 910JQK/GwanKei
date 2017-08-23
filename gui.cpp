@@ -13,8 +13,9 @@
 #include <QUrl>
 #include <QFile>
 #include <QTimer>
-#include <QSound>
+#include <QSoundEffect>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QDebug>
 #include "gui.hpp"
 
@@ -90,24 +91,33 @@ void Window::load_sound() {
       QString title = obj["title"].toString();
       QJsonObject files = obj["files"].toObject();
       if(!title.isEmpty() && !files.isEmpty()) {
-	sound_files[*I] = files;
+	QMap<QString, QSoundEffect*> sounds;
+	for(auto J=files.begin(); J!=files.end(); J++) {
+	  QString sound_name = J.key();
+	  QString file_name = J.value().toString();
+	  if(!file_name.isEmpty()) {
+	    QString path = (
+	      APP_DIR() + "/Sound/" + *I + "/" + file_name
+	    );
+	    if(QFile::exists(path)) {
+	      sounds[sound_name] = new QSoundEffect();
+	      sounds[sound_name]->setSource(QUrl::fromLocalFile(path));
+	    }
+	  }
+	} // for files
+	sounds_of_theme[*I] = sounds;
 	sound_themes_title[*I] = title;
-      }
-    }
+      } // title and files is not empty
+    } // valid JSON document
   } // for I of list
 }
 
 
 void Window::try_to_play_sound(QString name) {
-  if(sound_theme.isEmpty()) {
-    return;
-  }
-  QJsonObject files = sound_files[sound_theme];
-  QString file_name = files[name].toString();
-  if(!file_name.isEmpty()) {
-    QString path = APP_DIR() + "/Sound/" + sound_theme + "/" + file_name;
-    if(QFile::exists(path)) {
-      QSound::play(path);
+  if(!sound_theme.isEmpty()) {
+    QMap<QString, QSoundEffect*> sounds = sounds_of_theme[sound_theme];
+    if(sounds.find(name) != sounds.end()) {
+      sounds_of_theme[sound_theme][name]->play();
     }
   }
 }

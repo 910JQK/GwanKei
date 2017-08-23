@@ -293,6 +293,7 @@ function select_cell(cell) {
     cell_data[cell].svg_tag.classList.add('selected');
     selected_cell = cell;
     update_cursor();
+    Hub.play_sound('select');
 }
 
 

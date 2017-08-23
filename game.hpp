@@ -162,7 +162,7 @@ namespace GwanKei {
   private:
     MoveResult move_result = Nothing; // 碰子結果，若只是移動未碰子則為 Nothing
     std::list<Cell> route; // 棋子行進路線
-    bool show_flag; // 是否有司令損失導致亮旗？
+    bool show_flag = false; // 是否有司令損失導致亮旗？
   public:
     Feedback();
     Feedback(
