@@ -216,9 +216,12 @@ namespace GwanKei {
     // null
   }
 
-  Feedback::Feedback(MoveResult move_result, const std::list<Cell>& route) {
+  Feedback::Feedback(
+    MoveResult move_result, const std::list<Cell>& route, bool show_flag
+  ) {
     this->move_result = move_result;
     this->route = route;
+    this->show_flag = show_flag;
   }
 
   bool Feedback::is_nothing() const {
@@ -251,6 +254,10 @@ namespace GwanKei {
       }
     }
     return false;
+  }
+
+  bool Feedback::is_flag_shown() const {
+    return show_flag;
   }
 
   MoveResult Feedback::get_move_result() const {
@@ -432,8 +439,18 @@ namespace GwanKei {
     }
     MoveResult result;
     std::list<Cell> route;
+    bool show_flag = false;
     if(!from_element.is_unknown() && !to_element.is_unknown()) {
       assert(force_result == Nothing);
+      // count the number of 40
+      int n_of_40_before = 0;
+      if(!from_element.is_empty() && piece_of(from_element) == Piece(40)) {
+	n_of_40_before++;
+      }
+      if(!to_element.is_empty() && piece_of(to_element) == Piece(40)) {
+	n_of_40_before++;
+      }
+      // process board
       if(!to_element.is_empty()) {
 	result = Piece::attack(piece_of(from_element), piece_of(to_element));
       } else {
@@ -449,6 +466,17 @@ namespace GwanKei {
 	board[to.get_id()] = Element();
       }
       board[from.get_id()] = Element();
+      // count the number of 40
+      int n_of_40_after = 0;
+      Element target = board[to.get_id()];
+      if(!target.is_empty() && !target.is_unknown()) {
+	if(piece_of(target) == Piece(40)) {
+	  n_of_40_after++;
+	}
+      }
+      if(n_of_40_after < n_of_40_before) {
+	show_flag = true;
+      }
     } else {
       assert(force_result != Nothing);
       result = force_result;
@@ -462,7 +490,7 @@ namespace GwanKei {
       board[from.get_id()] = Element();
     }
     steps++;
-    last_feedback = Feedback(result, route);
+    last_feedback = Feedback(result, route, show_flag);
     return last_feedback;
   }
 

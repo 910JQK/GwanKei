@@ -162,12 +162,17 @@ namespace GwanKei {
   private:
     MoveResult move_result = Nothing; // 碰子結果，若只是移動未碰子則為 Nothing
     std::list<Cell> route; // 棋子行進路線
-    bool turned; // 是否有轉向（工兵？）
+    bool show_flag; // 是否有司令損失導致亮旗？
   public:
     Feedback();
-    Feedback(MoveResult move_result, const std::list<Cell>& route);
+    Feedback(
+      MoveResult move_result,
+      const std::list<Cell>& route,
+      bool show_flag = false
+    );
     bool is_nothing() const;
     bool is_route_turned() const;
+    bool is_flag_shown() const;
     MoveResult get_move_result() const;
     std::list<Cell> get_route() const;
     Cell get_moved_cell() const;

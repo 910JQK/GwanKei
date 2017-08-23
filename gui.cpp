@@ -19,6 +19,9 @@
 #include "gui.hpp"
 
 
+#define APP_DIR() QApplication::applicationDirPath()
+
+
 Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
   view = new View(this);
   setCentralWidget(view);
@@ -42,15 +45,17 @@ Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
   connect(no_sound, &QAction::triggered, this, [this](){ sound_theme = ""; });
   no_sound->setCheckable(true);
   sound_menu->addAction(no_sound);
-  for(auto I=sound_files.begin(); I!=sound_files.end(); I++) {
+  for(auto I=sound_themes_title.begin(); I!=sound_themes_title.end(); I++) {
     QString name = I.key();
-    QAction* toggle_action = new QAction(name, sound_options);
+    QString title = I.value();
+    QAction* toggle_action = new QAction(title, sound_options);
     connect(toggle_action, &QAction::triggered,
 	    this, [this, name]() { sound_theme = name; });
     toggle_action->setCheckable(true);
     sound_menu->addAction(toggle_action);
   }
   no_sound->setChecked(true);
+  connect(view->hub, &Hub::play_sound, this, &Window::try_to_play_sound);
 
   QAction* inspector_action = new QAction(tr("Open &Inspector"), this);
   connect(inspector_action, &QAction::triggered, view, &View::open_inspector);
@@ -71,7 +76,7 @@ Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
 
 
 void Window::load_sound() {
-  QDir sound_dir(QApplication::applicationDirPath() + "/Sound");
+  QDir sound_dir(APP_DIR() + "/Sound");
   QStringList list = sound_dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
   for(auto I=list.begin(); I!=list.end(); I++) {
     QFile index_file(sound_dir.absoluteFilePath(*I + "/index.json"));
@@ -85,8 +90,24 @@ void Window::load_sound() {
       QString title = obj["title"].toString();
       QJsonObject files = obj["files"].toObject();
       if(!title.isEmpty() && !files.isEmpty()) {
-	sound_files[title] = files;
+	sound_files[*I] = files;
+	sound_themes_title[*I] = title;
       }
+    }
+  } // for I of list
+}
+
+
+void Window::try_to_play_sound(QString name) {
+  if(sound_theme.isEmpty()) {
+    return;
+  }
+  QJsonObject files = sound_files[sound_theme];
+  QString file_name = files[name].toString();
+  if(!file_name.isEmpty()) {
+    QString path = APP_DIR() + "/Sound/" + sound_theme + "/" + file_name;
+    if(QFile::exists(path)) {
+      QSound::play(path);
     }
   }
 }
@@ -97,12 +118,10 @@ View::View(QWidget* parent) : QWebView(parent) {
   defaultSettings->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
   defaultSettings->setAttribute(QWebSettings::JavascriptEnabled, true);
   setContextMenuPolicy(Qt::NoContextMenu);
-  hub = new Hub();
+  hub = new Hub(this);
   connect(page()->mainFrame(), &QWebFrame::javaScriptWindowObjectCleared,
 	  this, &View::javaScriptWindowObjectCleared );
-  load(QUrl::fromLocalFile(
-    QApplication::applicationDirPath() + "/board.html"
-  ));
+  load(QUrl::fromLocalFile(APP_DIR() + "/board.html"));
 }
 
 
@@ -138,6 +157,7 @@ void View::init_battle() {
         .arg(battle->get_player_name(who))
         .arg(reason_str[reason])
     );
+    emit hub->play_sound("fail");
   });
   connect(battle, &Battle::end, this, [this](Ending ending) {
     End4Player my_ending = ending[battle->get_player()];
@@ -150,6 +170,7 @@ void View::init_battle() {
       tr("Game Over (%1)").arg(ending_str[my_ending])
     );
     hub->game_over();
+    emit hub->play_sound("end");
   });
 }
 
@@ -174,6 +195,11 @@ void View::open_inspector() {
 
 void View::javaScriptWindowObjectCleared() {
   page()->mainFrame()->addToJavaScriptWindowObject("Hub", hub);
+}
+
+
+Hub::Hub(QObject *parent) : QObject(parent) {
+
 }
 
 
@@ -254,6 +280,25 @@ void Hub::status_changed(Game game, Player current_player, int wait_seconds) {
   this->current_player = current_player;
   execute_render();
   set_clock(wait_seconds);
+  Feedback feedback = game.get_last_feedback();
+  MoveResult move_result = feedback.get_move_result();
+  if(game.get_steps() != last_steps) {
+    if(feedback.is_flag_shown()) {
+      emit play_sound("show_flag");
+    } else if(move_result == Bigger) {
+      emit play_sound("bigger");
+    } else if(move_result == Smaller) {
+      emit play_sound("smaller");    
+    } else if(move_result == Equal) {
+      emit play_sound("equal");
+    } else if(move_result == Nothing) {
+      emit play_sound("move");
+    }
+  }
+  if(game.get_steps() == 0) {
+    emit play_sound("start");
+  }
+  last_steps = game.get_steps();
 }
 
 
@@ -325,9 +370,9 @@ Board::Board(const Game& game, Player perspective, bool is_watching) : QObject()
 	if(e.is_unknown())
 	  elements.push_back(RenderElementFromUnknownPiece(Cell(i), e));
 	else
-	  elements.push_back(RenderElementFromPiece(
-			         Cell(i), e, game.piece_of(e))
-			     );
+	  elements.push_back(
+	    RenderElementFromPiece(Cell(i), e, game.piece_of(e))
+	  );
       } else {
 	elements.push_back(RenderElementFromEmptyCell(Cell(i)) );
       }

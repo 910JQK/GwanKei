@@ -26,17 +26,19 @@ class Window : public QMainWindow {
   Q_OBJECT
 private:
   QMap<QString, QJsonObject> sound_files;
+  QMap<QString, QString> sound_themes_title;
   QString sound_theme = "";
   void load_sound();
-public:
-  Window(QApplication* app, QWidget* parent = nullptr);
+public:  
   View* view;
+  Window(QApplication* app, QWidget* parent = nullptr);
+public slots:
+  void try_to_play_sound(QString name);
 };
 
 class View : public QWebView {
   Q_OBJECT
 private:
-  Hub* hub;
   Battle* battle;
   QDialog* inspector_dialog;
   QWebInspector* inspector;
@@ -44,6 +46,7 @@ private:
   bool battle_created = false;
   void init_battle();
 public:
+  Hub* hub;
   View(QWidget* parent);
   void new_game(BattleType type);
 public slots:
@@ -74,7 +77,9 @@ private:
   Layout layout;
   Player player;
   Player current_player;
+  int last_steps = 0;
 public:
+  Hub(QObject* parent);
   void execute_render();
   void init(Player player, Layout layout);
   Layout get_layout() const;
@@ -93,6 +98,7 @@ signals:
   /* -- Signals for Rendering -- */
   void render(Board* board);
   void set_clock(int wait_seconds);
+  void play_sound(QString name);
 public slots:
   void game_over();
   void status_changed(Game game, Player current_player, int wait_seconds);
