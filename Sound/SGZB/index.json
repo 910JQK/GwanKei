@@ -1,0 +1,13 @@
+{
+    "title": "SGZB Ver.",
+    "files": {
+	"start": "OK.WAV",
+	"fail": "DIE.WAV",
+	"select": "SELECT.WAV",
+	"move": "MOVE.WAV",
+	"bigger": "EAT.WAV",
+	"smaller": "BEEAT.WAV",
+	"equal": "EQUAL.WAV",
+	"show_flag": "SHOWFLAG.WAV"
+    }
+}

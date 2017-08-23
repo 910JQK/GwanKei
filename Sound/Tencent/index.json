@@ -1,0 +1,13 @@
+{
+    "title": "Tencent Ver.",
+    "files": {
+	"start": "Begin.wav",
+	"end": "dead.wav",
+	"select": "select.wav",
+	"move": "move.wav",
+	"bigger": "eat.wav",
+	"smaller": "killed.wav",
+	"equal": "bomb.wav",
+	"show_flag": "showflag.wav"
+    }
+}
