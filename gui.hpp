@@ -5,7 +5,9 @@
 #include <QObject>
 #include <QList>
 #include <QString>
+#include <QMap>
 #include <QVariantMap>
+#include <QJsonObject>
 #include "battle.hpp"
 
 using namespace GwanKei;
@@ -22,6 +24,10 @@ class QWebInspector;
 
 class Window : public QMainWindow {
   Q_OBJECT
+private:
+  QMap<QString, QJsonObject> sound_files;
+  QString sound_theme = "";
+  void load_sound();
 public:
   Window(QApplication* app, QWidget* parent = nullptr);
   View* view;

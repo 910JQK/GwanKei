@@ -1,4 +1,4 @@
-QT       += core gui widgets webkitwidgets
+QT       += core gui widgets webkitwidgets multimedia
 
 TARGET = GwanKei
 TEMPLATE = app

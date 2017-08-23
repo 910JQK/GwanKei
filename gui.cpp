@@ -11,7 +11,10 @@
 #include <QAction>
 #include <QDir>
 #include <QUrl>
+#include <QFile>
 #include <QTimer>
+#include <QSound>
+#include <QJsonDocument>
 #include <QDebug>
 #include "gui.hpp"
 
@@ -29,23 +32,63 @@ Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
   QMenu* start_menu = menuBar()->addMenu(tr("&Start"));
   QMenu* bl_menu = start_menu->addMenu(tr("&Brainless AI"));
   QMenu* li_menu = start_menu->addMenu(tr("&Low-IQ AI"));
+  QMenu* sound_menu = menuBar()->addMenu(tr("&Sound"));
   QMenu* debug_menu = menuBar()->addMenu(tr("&Debug"));
 
-  QAction* inspector_action = new QAction(tr("Open &Inspector"));
+  load_sound();
+  QActionGroup* sound_options = new QActionGroup(this);
+  sound_options->setExclusive(true);
+  QAction* no_sound = new QAction(tr("&None"), sound_options);
+  connect(no_sound, &QAction::triggered, this, [this](){ sound_theme = ""; });
+  no_sound->setCheckable(true);
+  sound_menu->addAction(no_sound);
+  for(auto I=sound_files.begin(); I!=sound_files.end(); I++) {
+    QString name = I.key();
+    QAction* toggle_action = new QAction(name, sound_options);
+    connect(toggle_action, &QAction::triggered,
+	    this, [this, name]() { sound_theme = name; });
+    toggle_action->setCheckable(true);
+    sound_menu->addAction(toggle_action);
+  }
+  no_sound->setChecked(true);
+
+  QAction* inspector_action = new QAction(tr("Open &Inspector"), this);
   connect(inspector_action, &QAction::triggered, view, &View::open_inspector);
   debug_menu->addAction(inspector_action);
 
   #define ADD_MENU_ITEM(menu, item, battle_type, text)	\
-  QAction* item = new QAction(text); \
-  connect(item, &QAction::triggered, \
-	  view, [this]() { view->new_game(battle_type); }); \
-  menu->addAction(item);
+    QAction* item = new QAction(text, this);		\
+    connect(item, &QAction::triggered,			    \
+	    view, [this]() { view->new_game(battle_type); });	\
+    menu->addAction(item);
 
   ADD_MENU_ITEM(bl_menu, bl_2v2_ne, BL_AI_2v2_NE, tr("2v2 &Ordinary"));
   ADD_MENU_ITEM(bl_menu, bl_2v2_de, BL_AI_2v2_DE, tr("2v2 &Allied Visible"));
   ADD_MENU_ITEM(li_menu, li_1v1, LI_AI_1v1, tr("&1v1"));
   ADD_MENU_ITEM(li_menu, li_2v2_ne, LI_AI_2v2_NE, tr("2v2 &Ordinary"));
   ADD_MENU_ITEM(li_menu, li_2v2_de, LI_AI_2v2_DE, tr("2v2 &Allied Visible"));
+}
+
+
+void Window::load_sound() {
+  QDir sound_dir(QApplication::applicationDirPath() + "/Sound");
+  QStringList list = sound_dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+  for(auto I=list.begin(); I!=list.end(); I++) {
+    QFile index_file(sound_dir.absoluteFilePath(*I + "/index.json"));
+    QString str;
+    index_file.open(QIODevice::ReadOnly | QIODevice::Text);
+    str = index_file.readAll();
+    index_file.close();
+    QJsonDocument doc = QJsonDocument::fromJson(str.toUtf8());
+    if(!doc.isNull() && doc.isObject()) {
+      QJsonObject obj = doc.object();
+      QString title = obj["title"].toString();
+      QJsonObject files = obj["files"].toObject();
+      if(!title.isEmpty() && !files.isEmpty()) {
+	sound_files[title] = files;
+      }
+    }
+  }
 }
 
 
@@ -58,7 +101,7 @@ View::View(QWidget* parent) : QWebView(parent) {
   connect(page()->mainFrame(), &QWebFrame::javaScriptWindowObjectCleared,
 	  this, &View::javaScriptWindowObjectCleared );
   load(QUrl::fromLocalFile(
-      QApplication::applicationDirPath() + "/board.html"
+    QApplication::applicationDirPath() + "/board.html"
   ));
 }
 
