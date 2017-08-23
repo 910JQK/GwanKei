@@ -9,10 +9,12 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QTranslator>
 #include <QWebFrame>
 #include <QMenuBar>
 #include <QAction>
 #include <QDialog>
+#include <QLocale>
 #include <QDebug>
 #include <QLabel>
 #include <QTimer>
@@ -27,6 +29,16 @@
 
 
 Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
+  QString locale  = QLocale::system().name();
+  QTranslator* app_trans = new QTranslator();
+  QTranslator* sys_trans = new QTranslator();
+  if(app_trans->load(QString("Locale/%1/gwankei.qm").arg(locale)) ) {
+    app->installTranslator(app_trans);
+  }
+  if(sys_trans->load(QString("qt_%1.qm").arg(locale)) ) {
+    app->installTranslator(sys_trans);
+  }
+  
   view = new View(this);
   setCentralWidget(view);
   setWindowTitle(tr("GwanKei"));
@@ -86,7 +98,7 @@ Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
     ok_btn->fontMetrics().boundingRect(ok_btn->text()).width() + 20
   );
   about_dialog->setModal(false);
-  about_dialog->setWindowTitle("About this program");
+  about_dialog->setWindowTitle(tr("About this program"));
   connect(about_action, &QAction::triggered, this, [this]() {
     about_dialog->show();
     about_dialog->raise();

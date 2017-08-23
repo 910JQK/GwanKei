@@ -18,3 +18,7 @@ HEADERS += battle.hpp \
            desk.hpp \
            game.hpp \
            core.hpp
+
+TRANSLATIONS += Locale/zh_TW/gwankei.ts \
+                Locale/zh_CN/gwankei.ts \
+                Locale/ja_JP/gwankei.ts
