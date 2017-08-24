@@ -5,6 +5,7 @@
 #include <QApplication>
 #include <QSoundEffect>
 #include <QWebSettings>
+#include <QLibraryInfo>
 #include <QJsonObject>
 #include <QMessageBox>
 #include <QPushButton>
@@ -30,12 +31,16 @@
 
 Window::Window(QApplication* app, QWidget* parent) : QMainWindow(parent) {
   QString locale  = QLocale::system().name();
+  QString app_trans_file = QString("%1/Locale/%2/gwankei.qm")
+    .arg(APP_DIR()).arg(locale);
+  QString sys_trans_file = QString("%1/qt_%2.qm")
+    .arg(QLibraryInfo::location(QLibraryInfo::TranslationsPath)).arg(locale);
   QTranslator* app_trans = new QTranslator();
   QTranslator* sys_trans = new QTranslator();
-  if(app_trans->load(QString("Locale/%1/gwankei.qm").arg(locale)) ) {
+  if(app_trans->load(app_trans_file)) {
     app->installTranslator(app_trans);
   }
-  if(sys_trans->load(QString("qt_%1.qm").arg(locale)) ) {
+  if(sys_trans->load(sys_trans_file)) {
     app->installTranslator(sys_trans);
   }
   
