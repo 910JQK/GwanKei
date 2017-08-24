@@ -1,24 +1,20 @@
 const SVG_NS = 'http://www.w3.org/2000/svg';
+const XLINK = 'http://www.w3.org/1999/xlink';
 const U = 10; // unit
 const PIECE_WIDTH = 0.9*U;
 const PIECE_HEIGHT = 0.7*U;
-const PIECE_FONT_SIZE = '4.2';
-const PIECE_COLOR = [
-    'hsl(18,100%,20%)',
-    'hsl(290,100%,25%)',
-    'hsl(130,100%,30%)',
-    'hsl(233,100%,20%)'
-];
+const PIECE_FONT_SIZE = 0.43*U;
+const COLOR_CLASS = ['red', 'purple', 'green', 'blue'];
 const PIECE_TRANSFORM = ['', '', 'rotate(90)', '', 'rotate(-90)'];
 const PIECE_TEXT = [
-    '炸彈', '#','#','#','#',
+    '炸弹', '#','#','#','#',
     '#','#','#','#','#',
     '#','#','#','#','#',
     '#','#','#','#','#',
     '#','#','#','#','#',
     '#','#','#','#','#',
-    '#','軍旗','工兵','排長','連長',
-    '營長','團長','旅長','師長','軍長',
+    '#','军旗','工兵','排长','连长',
+    '营长','团长','旅长','师长','军长',
     '司令', '地雷', ''
 ];
 
@@ -147,9 +143,6 @@ function draw_piece(player, group, y, x, lr, piece_id, eid) {
 	    y: coor.y,
 	    width: PIECE_WIDTH,
 	    height: PIECE_HEIGHT,
-	    stroke: (empty)? 'none': 'black',
-	    'stroke-width': 0.5,
-	    fill: (empty)? 'hsla(0,0%,0%,0)': PIECE_COLOR[player]
 	},
 	{
 	    transform: 'translate(-50%,-50%)'
@@ -160,14 +153,8 @@ function draw_piece(player, group, y, x, lr, piece_id, eid) {
 	{
 	    x: coor.x,
 	    y: coor.y,
-	    'text-anchor': 'middle',
 	    dy: '1.5',
-	    'font-family': 'sans',
-	    'font-size': PIECE_FONT_SIZE,
-	    fill: 'white'
-	},
-	{
-	    cursor: 'inherit'
+	    'font-size': PIECE_FONT_SIZE
 	}
     );
     if(!empty) {
@@ -185,8 +172,10 @@ function draw_piece(player, group, y, x, lr, piece_id, eid) {
 	    transform: `translate(${coor.x},${coor.y}) ${PIECE_TRANSFORM[get_relative_group(group)]} translate(${-coor.x},${-coor.y})`
 	}
     );
+    g_tag.classList.add('element');
     if(!empty) {
 	g_tag.classList.add('piece');
+	g_tag.classList.add(COLOR_CLASS[player]);
     } else {
 	g_tag.classList.add('placeholder');
     }
@@ -211,6 +200,7 @@ function draw_piece(player, group, y, x, lr, piece_id, eid) {
 			];
 			if(Hub.is_layout_able_to_swap(args[0], args[1])) {
 			    Hub.layout_swap(args[0], args[1]);
+			    Hub.play_sound('select');
 			} else {
 			    select_cell(cell);
 			}
@@ -263,27 +253,22 @@ function draw_route(route_arr) {
 	let vector = {x: (next_rc.x - rc.x), y: (next_rc.y - rc.y)};
 	let theta = Math.round(Math.atan2(vector.y, vector.x)*180/Math.PI);
 	console.log(`[${route_arr[i].cell}] (${rc.x},${rc.y}), ${theta}`);
-	let text = create_tag(
-	    'text',
+	let arrow = create_tag(
+	    'use',
 	    {
 		x: rc.x,
 		y: rc.y,
-		'text-anchor': 'middle',
-		dy: 1,
-		'font-size': '8',
-		fill: 'red',
-		transform: `translate(${rc.x},${rc.y}) rotate(${theta}) translate(${-rc.x},${-rc.y})`
+		width: 8,
+		height: 8,
+		transform: `translate(${rc.x}, ${rc.y}) rotate(${theta}) translate(${-rc.x}, ${-rc.y})`
 	    }
 	);
-	text.textContent = '\u2192';
-	route_signs.appendChild(text);
+	arrow.setAttributeNS(XLINK, 'href', '#arrow_path');
+	route_signs.appendChild(arrow);
     }
     if(route_arr.length > 1) {
 	let target_cell = route_arr[route_arr.length-1].cell;
-	if(cell_data[target_cell].type == 'empty') {
-	    let rect = cell_data[target_cell].svg_tag.querySelector('rect');
-	    rect.style.stroke = 'red';
-	}
+	cell_data[target_cell].svg_tag.classList.add('target');
     }
 }
 
@@ -420,8 +405,8 @@ function set_clock(seconds) {
 
 function init_clocks() {
     var pos = {x:40,y:55};
-    const width = 15;
-    const height = 10;
+    const width = 1.5*U;
+    const height = 1*U;
     for(let i=0; i<4; i++) {
 	let rect = create_tag(
 	    'rect',
@@ -429,13 +414,7 @@ function init_clocks() {
 		x: pos.x,
 		y: pos.y,
 		width: width,
-		height: height,
-		fill: 'none',
-		stroke: 'black',
-		'stroke-width': 1
-	    },
-	    {
-		transform: 'translate(-50%, -50%)'
+		height: height
 	    }
 	);
 	let text = create_tag(
@@ -444,8 +423,7 @@ function init_clocks() {
 		x: pos.x,
 		y: pos.y,
 		dy: 3,
-		'text-anchor': 'middle',
-		'font-size': 10
+		'font-size': 1*U
 	    }
 	);
 	text.textContent = '00';

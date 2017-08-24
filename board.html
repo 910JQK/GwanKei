@@ -23,7 +23,28 @@
       text { -webkit-user-select: none; }
       .piece { cursor: default; }
       .piece.selectable { cursor: pointer; }
-      .placeholder.reachable, .piece.reachable { cursor: pointer; }
+      .element > rect {
+	  stroke-width: 0.5;
+	  transform: translate(-50%, -50%);
+      }
+      .piece > rect { stroke: black; }
+      .placeholder > rect { stroke: none; fill: none; }
+      .piece.red > rect { fill: url(#red); }
+      .piece.purple > rect { fill: url(#purple); }
+      .piece.green > rect { fill: url(#green); }
+      .piece.blue > rect { fill: url(#blue); }
+      .placeholder.target > rect { stroke: red; }
+      .piece.target.red > rect { fill: url(#light_red); }
+      .piece.target.purple > rect { fill: url(#light_purple); }
+      .piece.target.green > rect { fill: url(#light_green); }
+      .piece.target.blue > rect { fill: url(#light_blue); }
+      .piece > text {
+          font-family: sans-serif, "思源黑体 CN", "微软雅黑";
+	  text-anchor: middle;
+	  fill: white;
+          cursor: inherit;
+      }
+      .element.reachable{ cursor: pointer; }
       .placeholder.reachable > rect {
           stroke: hsla(0, 0%, 0%, 0.3);
           fill: hsla(50, 95%, 50%, 0.3);
@@ -37,6 +58,17 @@
       .piece.selected > text { fill: black; }
       .button { cursor: pointer; }
       .button:hover rect { fill: hsla(0, 0%, 80%, 0.8); }
+      .clock > rect {
+          fill: none;
+          stroke: black;
+          stroke-width: 1;
+          transform: translate(-50%, -50%);
+      }
+      .clock > text {
+          cursor: default;
+          -webkit-user-select: none;
+          text-anchor: middle;
+      }
       #panel {
           position: absolute;
           border: 2px solid black;
@@ -47,6 +79,12 @@
       }
       #panel td {
           cursor: pointer;
+          -wekit-user-select: none;
+      }
+      #arrow_path {
+	  fill: url(#arrow_color);
+	  stroke: black;
+	  stroke-width: 0.5;
       }
     </style>
   </head>
@@ -54,11 +92,48 @@
     <div id="container">
       <svg id="board" viewBox="-100 -100 200 200">
 	<defs>
+	  <linearGradient id="red">
+	    <stop offset="0%" stop-color="hsl(0, 90%, 25%)" />
+	    <stop offset="100%" stop-color="hsl(0, 90%, 30%)" />
+	  </linearGradient>
+	  <linearGradient id="light_red">
+	    <stop offset="0%" stop-color="hsl(0, 90%, 45%)" />
+	    <stop offset="100%" stop-color="hsl(0, 90%, 50%)" />
+	  </linearGradient>
+	  <linearGradient id="purple">
+	    <stop offset="0%" stop-color="hsl(275, 90%, 25%)" />
+	    <stop offset="100%" stop-color="hsl(275, 90%, 30%)" />
+	  </linearGradient>
+	  <linearGradient id="light_purple">
+	    <stop offset="0%" stop-color="hsl(275, 90%, 50%)" />
+	    <stop offset="100%" stop-color="hsl(275, 90%, 55%)" />
+	  </linearGradient>
+	  <linearGradient id="green">
+	    <stop offset="0%" stop-color="hsl(130, 90%, 25%)" />
+	    <stop offset="100%" stop-color="hsl(130, 90%, 30%)" />
+	  </linearGradient>
+	  <linearGradient id="light_green">
+	    <stop offset="0%" stop-color="hsl(130, 90%, 35%)" />
+	    <stop offset="100%" stop-color="hsl(130, 90%, 40%)" />
+	  </linearGradient>
+	  <linearGradient id="blue">
+	    <stop offset="0%" stop-color="hsl(233, 90%, 25%)" />
+	    <stop offset="100%" stop-color="hsl(233, 90%, 30%)" />
+	  </linearGradient>
+	  <linearGradient id="light_blue">
+	    <stop offset="0%" stop-color="hsl(233, 90%, 50%)" />
+	    <stop offset="100%" stop-color="hsl(233, 90%, 55%)" />
+	  </linearGradient>
+	  <linearGradient id="arrow_color">
+	    <stop offset="0%" stop-color="hsl(60, 95%, 46%)" />
+	    <stop offset="100%" stop-color="hsl(60, 95%, 50%)" />
+	  </linearGradient>
 	  <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="translate(-5,0)">
             <path d="M 10 0 L 0 0 0 10" fill="none" stroke="gray" stroke-width="1" stroke-dasharray="1" />
 	  </pattern>
 	  <rect id="central_grid" width="10" height="10" fill="none" stroke="gray" stroke-width="0.5" stroke-dasharray="1" />
-	  <rect id="player_grid" x="-25" y="30" width="51" height="61" fill="url(#grid)" stroke="none" />
+	  <rect id="player_grid" x="-25" y="30" width="51" height="60.5" fill="url(#grid)" stroke="none" />
+	  <path id="arrow_path" d="M5 0v2h-5v2h5v2l3-3.03-3-2.97z" transform="translate(-4, -4) translate(0 1)"/> <!-- from open-iconic -->
 	</defs>
 	<use xlink:href="#central_grid" x="-5" y="-5" />
 	<use xlink:href="#central_grid" x="15" y="15" />
