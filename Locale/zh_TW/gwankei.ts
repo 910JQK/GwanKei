@@ -115,7 +115,7 @@
     <message>
         <location filename="../../gui.cpp" line="83"/>
         <source>&lt;h2&gt;GwanKei&lt;/h2&gt;&lt;h4&gt;Open Source Junqi Implementation&lt;/h4&gt;&lt;p&gt;This is an implementation of the Chinese board game Junqi which is licenced under LGPL.&lt;/p&gt;&lt;p&gt;If you know nothing about this game, please search about Junqi or Luzhanqi on Wikipedia.&lt;/p&gt;&lt;p&gt;All the source code is available at &lt;a href=&apos;github&apos;&gt;https://github.com/910JQK/GwanKei&lt;/a&gt;.&lt;/p&gt;</source>
-        <translation>&lt;h2&gt;GwanKei&lt;/h2&gt;&lt;h4&gt;開放原始碼的四國軍棋實作&lt;/h4&gt;&lt;p&gt;本軟件是四國軍棋游戲的一個實作，以 LGPL 授權條款發佈。&lt;/p&gt;&lt;p&gt;如果您不了解四國軍棋的規則，請在維基百科搜索「軍旗」或「陸戰棋」。&lt;/p&gt;&lt;p&gt;原始碼在這裡： &lt;a href=&apos;github&apos;&gt;https://github.com/910JQK/GwanKei&lt;/a&gt;.&lt;/p&gt;</translation>
+        <translation>&lt;h2&gt;GwanKei&lt;/h2&gt;&lt;h4&gt;開放原始碼的四國軍棋實作&lt;/h4&gt;&lt;p&gt;本軟體是四國軍棋游戲的一個實作，以 LGPL 授權條款發佈。&lt;/p&gt;&lt;p&gt;如果您不了解四國軍棋的規則，請在維基百科搜索「軍旗」或「陸戰棋」。&lt;/p&gt;&lt;p&gt;原始碼在這裡： &lt;a href=&apos;github&apos;&gt;https://github.com/910JQK/GwanKei&lt;/a&gt;.&lt;/p&gt;</translation>
     </message>
     <message>
         <location filename="../../gui.cpp" line="90"/>
