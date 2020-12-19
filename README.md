@@ -25,4 +25,4 @@ $ yaourt -S gwankei-git
 
 ## 注意
 
-本程式相依於 `qtwebkit`. 由於 `qtwebkit` 在 Qt5 中仍為實驗性功能（且無官方支援），<del>本程式在 Windows 平台上無法正常運作 (Segfault)</del>在最新的 Windows MSYS2 平台上可以正常運，惟 DevTools 無法使用。在 GNU/Linux 上沒有類似問題。
+本程式相依於 `qtwebkit`. 由於 `qtwebkit` 在 Qt5 中仍為實驗性功能（且無官方支援），<del>本程式在 Windows 平台上無法正常運作 (Segfault)</del>在最新的 Windows MSYS2 平台上可以正常運作，惟 DevTools 無法使用。在 GNU/Linux 上沒有類似問題。
